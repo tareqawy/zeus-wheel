@@ -4,14 +4,13 @@
     <meta charset="utf-8">
     <title>عجلة الحظ - TAEMBOT</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
-    <script src="https://telegram.org/js/telegram-web-app.js?v=1"></script>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
         }
-        
         body {
             background: linear-gradient(135deg, #1a1a2e, #16213e);
             min-height: 100vh;
@@ -21,24 +20,21 @@
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             padding: 20px;
         }
-        
         #game {
             position: relative;
             width: 300px;
             height: 300px;
             margin: 0 auto;
         }
-        
         .wheel {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            transition: transform 5s cubic-bezier(0.2, 0.9, 0.1, 1);
             position: absolute;
             top: 0;
             left: 0;
+            transition: transform 4s cubic-bezier(0.2, 0.9, 0.1, 1);
         }
-        
         .pin {
             position: absolute;
             top: -20px;
@@ -47,7 +43,6 @@
             width: 40px;
             z-index: 20;
         }
-        
         .button {
             width: 60px;
             height: 60px;
@@ -60,47 +55,41 @@
             border-radius: 50%;
             transition: transform 0.2s;
         }
-        
         .button:active {
             transform: translate(-50%, -50%) scale(0.95);
         }
-        
         .button.disabled {
             opacity: 0.5;
             cursor: not-allowed;
         }
-        
         #result_box {
             position: fixed;
             bottom: 100px;
             left: 50%;
             transform: translateX(-50%);
-            padding: 15px 25px;
+            padding: 12px 24px;
             background: rgba(0,0,0,0.85);
             backdrop-filter: blur(10px);
             border-radius: 50px;
             color: white;
-            font-size: 18px;
+            font-size: 16px;
             font-weight: bold;
             display: none;
             z-index: 100;
+            text-align: center;
             white-space: nowrap;
         }
-        
         .win-result {
             background: linear-gradient(135deg, #4caf50, #2e7d32);
-            box-shadow: 0 0 20px #4caf50;
+            box-shadow: 0 0 15px #4caf50;
         }
-        
         .respin-result {
             background: linear-gradient(135deg, #ffc107, #ff8f00);
-            box-shadow: 0 0 20px #ffc107;
+            box-shadow: 0 0 15px #ffc107;
         }
-        
         .lose-result {
             background: linear-gradient(135deg, #f44336, #c62828);
         }
-        
         #clock {
             position: fixed;
             bottom: 30px;
@@ -108,51 +97,20 @@
             transform: translateX(-50%);
             background: rgba(0,0,0,0.7);
             backdrop-filter: blur(10px);
-            padding: 10px 20px;
+            padding: 8px 16px;
             border-radius: 30px;
             color: white;
-            font-size: 14px;
+            font-size: 13px;
             text-align: center;
             white-space: nowrap;
             z-index: 10;
         }
-        
         @media (max-width: 600px) {
-            #game {
-                width: 250px;
-                height: 250px;
-            }
-            #result_box {
-                font-size: 14px;
-                padding: 10px 20px;
-                bottom: 80px;
-            }
-            #clock {
-                font-size: 12px;
-                white-space: normal;
-                width: 90%;
-                text-align: center;
-            }
+            #game { width: 250px; height: 250px; }
+            #result_box { font-size: 14px; padding: 8px 16px; bottom: 80px; white-space: normal; max-width: 90%; }
+            #clock { font-size: 11px; white-space: normal; width: 90%; }
         }
-        
-        .loading {
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            color: white;
-            font-size: 20px;
-            z-index: 1000;
-        }
-        
-        .bounce {
-            animation: bounce 0.3s ease;
-        }
-        
-        @keyframes bounce {
-            0%, 100% { transform: translateX(-50%) scale(1); }
-            50% { transform: translateX(-50%) scale(1.1); }
-        }
+        .hidden { display: none; }
     </style>
 </head>
 <body>
@@ -162,94 +120,94 @@
         <img class="button" id="spinBtn" src="static/wheel_assets/button.png" onerror="this.src='https://tareqawy.github.io/zeus-wheel/static/wheel_assets/button.png'">
     </div>
     <div id="result_box"></div>
-    <div id="clock">🎡 جاري التحميل... 🎡</div>
+    <div id="clock">🎡 مرحباً! اضغط على الزر 🎡</div>
 
     <script>
         (function() {
-            // انتظار تحميل Telegram WebApp
-            let tg = null;
-            let userId = null;
-            let canSpin = true;
-            let isSpinning = false;
-            let hasRespin = false;
+            // ============================================================
+            // تهيئة Telegram WebApp
+            // ============================================================
+            let tg = window.TelegramWebApp;
+            tg.ready();
+            tg.expand();
             
+            let userId = tg.initDataUnsafe?.user?.id || null;
+            let isSpinning = false;
+            let canSpin = true;
+            
+            // عناصر DOM
             const wheel = document.getElementById('wheel');
             const spinBtn = document.getElementById('spinBtn');
             const resultBox = document.getElementById('result_box');
             const clockEl = document.getElementById('clock');
             
-            // محاولة الاتصال بـ Telegram WebApp
-            if (typeof window.TelegramWebApp !== 'undefined') {
-                tg = window.TelegramWebApp;
-                tg.ready();
-                tg.expand();
-                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                    userId = tg.initDataUnsafe.user.id;
-                }
-                console.log('✅ Telegram WebApp متصل');
-            } else {
-                console.log('⚠️ ليس داخل تليجرام - وضع اختبار');
-                // وضع اختبار للمتصفح العادي
-                tg = {
-                    ready: function() {},
-                    expand: function() {},
-                    sendData: function(data) { console.log('إرسال:', data); }
-                };
-                canSpin = true;
-                clockEl.innerText = '🎡 وضع الاختبار - اضغط للدوران 🎡';
-                spinBtn.classList.remove('disabled');
-            }
-            
-            // ترتيب الجوائز
+            // ثوابت العجلة (8 قطاعات كل قطاع 45 درجة)
             const SEGMENT_ANGLE = 45;
-            const CALIBRATION = 22.5;
+            const CALIBRATION = 22.5; // تعديل لمحاذاة المؤشر
             
+            // ============================================================
+            // حساب زاوية التوقف بناءً على نوع الجائزة
+            // ============================================================
             function calculateDegreeForPrize(prizeType) {
+                // مؤشر القطاع (0-7)
                 let prizeIndex = 4; // هارد لوك افتراضي
                 switch(prizeType) {
-                    case 'respin': prizeIndex = 1; break;
-                    case 'win_10000': prizeIndex = 2; break;
+                    case 'respin': prizeIndex = 1; break;      // قطاع الريسبن
+                    case 'win_10000': prizeIndex = 2; break;   // قطاع 10000 ليرة
+                    case 'hard_luck': prizeIndex = 4; break;   // قطاع هارد لوك
                     default: prizeIndex = 4;
                 }
+                
+                // منتصف القطاع المطلوب
                 let targetSectorMid = (prizeIndex * SEGMENT_ANGLE) + (SEGMENT_ANGLE / 2);
+                // الزاوية المطلوبة تحت المؤشر
                 let requiredAngle = (targetSectorMid - CALIBRATION + 360) % 360;
-                let fullRotations = 360 * (Math.floor(Math.random() * 8) + 8);
+                // عدد اللفات العشوائية (بين 8 و 16 لفة)
+                let fullRotations = 360 * (Math.floor(Math.random() * 9) + 8);
+                
                 return fullRotations + requiredAngle;
             }
             
-            function showResult(prizeName, isWin, isRespin) {
-                resultBox.style.display = 'block';
-                resultBox.innerText = prizeName;
-                
-                if (isRespin) {
-                    resultBox.className = 'respin-result';
-                } else if (isWin) {
-                    resultBox.className = 'win-result';
-                } else {
-                    resultBox.className = 'lose-result';
-                }
-                
-                setTimeout(() => {
-                    resultBox.style.display = 'none';
-                }, 3000);
-            }
-            
-            function performSpin(targetDegree, prizeName, isWin, isRespin) {
+            // ============================================================
+            // تنفيذ حركة الدوران وعرض النتيجة
+            // ============================================================
+            function performSpin(prizeName, prizeType, isWin, isRespin, prizeValue) {
                 if (isSpinning) return;
                 isSpinning = true;
                 spinBtn.classList.add('disabled');
                 
-                wheel.style.transition = 'transform 5s cubic-bezier(0.2, 0.9, 0.1, 1)';
+                // حساب زاوية التوقف
+                const targetDegree = calculateDegreeForPrize(prizeType);
+                
+                // تطبيق حركة الدوران
+                wheel.style.transition = 'transform 4s cubic-bezier(0.2, 0.9, 0.1, 1)';
                 wheel.style.transform = `rotate(${targetDegree}deg)`;
                 
+                // بعد انتهاء الحركة
                 setTimeout(() => {
+                    // إعادة تعيين الزاوية للحفاظ على المظهر
                     wheel.style.transition = 'none';
                     wheel.style.transform = `rotate(${targetDegree % 360}deg)`;
                     
-                    showResult(prizeName, isWin, isRespin);
+                    // عرض النتيجة
+                    resultBox.style.display = 'block';
+                    resultBox.innerText = prizeName;
                     
+                    if (isWin) {
+                        resultBox.className = 'win-result';
+                    } else if (isRespin) {
+                        resultBox.className = 'respin-result';
+                    } else {
+                        resultBox.className = 'lose-result';
+                    }
+                    
+                    // إخفاء النتيجة بعد 3 ثوانٍ
+                    setTimeout(() => {
+                        resultBox.style.display = 'none';
+                    }, 3000);
+                    
+                    // تحديث حالة الزر
                     if (isRespin) {
-                        hasRespin = true;
                         canSpin = true;
                         clockEl.innerText = '🎉 لديك فرصة إضافية! اضغط للدوران 🎉';
                         spinBtn.classList.remove('disabled');
@@ -260,83 +218,126 @@
                     }
                     
                     isSpinning = false;
-                    
-                    // إعلام البوت
-                    if (tg) tg.sendData(JSON.stringify({ action: 'spin_done' }));
-                }, 5000);
+                }, 4000);
             }
             
-            // طلب الحالة من البوت
-            function getStatus() {
-                if (tg) {
-                    tg.sendData(JSON.stringify({ action: 'get_status' }));
-                }
+            // ============================================================
+            // الاتصال بالبوت
+            // ============================================================
+            
+            // وظيفة لإرسال رسالة للبوت
+            function sendToBot(action, callback) {
+                const message = JSON.stringify({ action: action });
+                tg.sendData(message);
+                
+                // استقبال الرد
+                const handler = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (callback) callback(data);
+                    } catch(e) {
+                        console.error('خطأ في معالجة الرد:', e);
+                    }
+                    window.removeEventListener('message', handler);
+                };
+                window.addEventListener('message', handler, { once: true });
             }
             
-            // استقبال البيانات من البوت
-            window.addEventListener('message', function(event) {
-                try {
-                    const data = JSON.parse(event.data);
-                    console.log('📩 من البوت:', data);
-                    
-                    if (data.action === 'status_response') {
-                        canSpin = data.can_spin;
-                        hasRespin = data.has_respin || false;
-                        clockEl.innerText = data.message || (canSpin ? '🎡 اضغط للدوران 🎡' : '⏰ عاود غداً!');
-                        if (canSpin) {
+            // وظيفة طلب الدوران
+            function requestSpin() {
+                clockEl.innerText = '🎡 جاري الاتصال بالبوت... 🎡';
+                
+                const message = JSON.stringify({ action: 'spin' });
+                tg.sendData(message);
+                
+                // انتظار الرد من البوت
+                const handler = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        console.log('رد البوت:', data);
+                        
+                        if (data.action === 'spin_result') {
+                            // تنفيذ الدوران بالنتيجة من البوت
+                            performSpin(
+                                data.prize_name,
+                                data.prize_type,
+                                data.is_win,
+                                data.is_respin,
+                                data.prize_value
+                            );
+                        } else if (data.action === 'error') {
+                            clockEl.innerText = `❌ ${data.message}`;
                             spinBtn.classList.remove('disabled');
-                        } else {
-                            spinBtn.classList.add('disabled');
+                            isSpinning = false;
                         }
-                    }
-                    
-                    if (data.action === 'spin_result') {
-                        const targetDegree = calculateDegreeForPrize(data.prize_type);
-                        performSpin(targetDegree, data.prize_name, data.is_win, data.is_respin);
-                    }
-                    
-                    if (data.action === 'error') {
-                        clockEl.innerText = `❌ ${data.message}`;
+                    } catch(e) {
+                        console.error('خطأ:', e);
+                        clockEl.innerText = '❌ حدث خطأ، حاول مرة أخرى';
                         spinBtn.classList.remove('disabled');
                         isSpinning = false;
                     }
-                    
-                } catch(e) {
-                    console.log('خطأ في معالجة الرسالة:', e);
-                }
-            });
+                    window.removeEventListener('message', handler);
+                };
+                
+                window.addEventListener('message', handler, { once: true });
+            }
             
-            // زر الدوران
+            // وظيفة طلب الحالة
+            function requestStatus() {
+                const message = JSON.stringify({ action: 'get_status' });
+                tg.sendData(message);
+                
+                const handler = function(event) {
+                    try {
+                        const data = JSON.parse(event.data);
+                        if (data.action === 'status_response') {
+                            canSpin = data.can_spin;
+                            clockEl.innerText = data.message || (canSpin ? '🎡 اضغط للدوران 🎡' : '⏰ عاود غداً!');
+                            if (canSpin) {
+                                spinBtn.classList.remove('disabled');
+                            } else {
+                                spinBtn.classList.add('disabled');
+                            }
+                        }
+                    } catch(e) {
+                        console.error('خطأ:', e);
+                    }
+                    window.removeEventListener('message', handler);
+                };
+                window.addEventListener('message', handler, { once: true });
+            }
+            
+            // ============================================================
+            // حدث الضغط على زر الدوران
+            // ============================================================
             spinBtn.addEventListener('click', function() {
                 if (isSpinning) {
                     clockEl.innerText = '⏳ العجلة تدور حالياً...';
                     return;
                 }
                 
-                if (!canSpin && !hasRespin) {
+                if (!canSpin) {
                     clockEl.innerText = '⏰ لا توجد دورات متاحة اليوم!';
                     return;
                 }
                 
-                if (hasRespin) {
-                    tg.sendData(JSON.stringify({ action: 'use_respin' }));
-                    hasRespin = false;
-                } else {
-                    tg.sendData(JSON.stringify({ action: 'spin' }));
-                }
-                
+                // تعطيل الزر ومنع الدوران المتكرر
+                isSpinning = true;
                 spinBtn.classList.add('disabled');
                 clockEl.innerText = '🎡 جاري الدوران... 🎡';
+                
+                // طلب الدوران من البوت
+                requestSpin();
             });
             
-            // بدء التشغيل
+            // ============================================================
+            // بدء التشغيل - طلب الحالة من البوت
+            // ============================================================
             setTimeout(() => {
-                getStatus();
-                clockEl.innerText = '🎡 اضغط على الزر للدوران 🎡';
-                if (canSpin) spinBtn.classList.remove('disabled');
+                requestStatus();
             }, 500);
             
-            console.log('✅ العجلة جاهزة!');
+            console.log('✅ العجلة جاهزة وآمنة!');
         })();
     </script>
 </body>
