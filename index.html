@@ -1,493 +1,343 @@
 <!DOCTYPE html>
 <html>
-
 <head>
     <meta charset="utf-8">
-    <title>Spinning-Wheel - TAEMBOT</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link rel="stylesheet" type="text/css" href="static/wheel_assets/style.css">
-    <script src="https://telegram.org/js/telegram-web-app.js"></script>
-
+    <title>عجلة الحظ - TAEMBOT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <script src="https://telegram.org/js/telegram-web-app.js?v=1"></script>
     <style>
-        /* نفس الـ style الذي لديك، أضف فقط هذه الإضافات */
-        .loading-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0,0,0,0.8);
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a1a2e, #16213e);
+            min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            z-index: 1000;
-            flex-direction: column;
-        }
-        .spinner {
-            width: 50px;
-            height: 50px;
-            border: 5px solid #555;
-            border-top-color: #ffc107;
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-        }
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-        .loading-text {
-            color: white;
-            margin-top: 20px;
-            font-size: 16px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            padding: 20px;
         }
         
-        @keyframes pulseButton {
-            0% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.1); }
-            100% { transform: translate(-50%, -50%) scale(1); }
+        #game {
+            position: relative;
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
         }
-
-        .button-centered.attention {
-            animation: pulseButton 1.5s ease-in-out infinite;
+        
+        .wheel {
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            transition: transform 5s cubic-bezier(0.2, 0.9, 0.1, 1);
+            position: absolute;
+            top: 0;
+            left: 0;
         }
-
+        
+        .pin {
+            position: absolute;
+            top: -20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            z-index: 20;
+        }
+        
+        .button {
+            width: 60px;
+            height: 60px;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            cursor: pointer;
+            z-index: 15;
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+        
+        .button:active {
+            transform: translate(-50%, -50%) scale(0.95);
+        }
+        
+        .button.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
         #result_box {
             position: fixed;
+            bottom: 100px;
             left: 50%;
-            top: 70%;
             transform: translateX(-50%);
-            padding: 20px 30px;
-            min-width: 280px;
-            max-width: 400px;
-            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), rgba(255, 255, 255, 0.1));
-            backdrop-filter: blur(20px);
-            border: 2px solid rgba(255, 255, 255, 0.4);
-            border-radius: 25px;
-            color: #fff;
-            font-size: 20px;
-            font-weight: 700;
-            text-align: center;
+            padding: 15px 25px;
+            background: rgba(0,0,0,0.85);
+            backdrop-filter: blur(10px);
+            border-radius: 50px;
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
             display: none;
-            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.5), inset 0 2px 0 rgba(255, 255, 255, 0.3);
+            z-index: 100;
             white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            line-height: 1.2;
-            z-index: 10;
-            letter-spacing: 0.5px;
         }
         
         .win-result {
-            background: linear-gradient(135deg, rgba(76, 175, 80, 0.95), rgba(139, 195, 74, 0.9));
-            border: 3px solid rgba(76, 175, 80, 0.9);
-            animation: winPulse 0.5s ease-out;
-        }
-        
-        .lose-result {
-            background: linear-gradient(135deg, rgba(244, 67, 54, 0.95), rgba(233, 30, 99, 0.9));
-            border: 3px solid rgba(244, 67, 54, 0.9);
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            box-shadow: 0 0 20px #4caf50;
         }
         
         .respin-result {
-            background: linear-gradient(135deg, rgba(255, 193, 7, 0.95), rgba(255, 152, 0, 0.9));
-            border: 3px solid rgba(255, 193, 7, 0.9);
-            animation: respinGlow 1s ease-in-out infinite alternate;
+            background: linear-gradient(135deg, #ffc107, #ff8f00);
+            box-shadow: 0 0 20px #ffc107;
         }
         
-        @keyframes winPulse {
-            0% { transform: translateX(-50%) scale(0.8); opacity: 0; }
-            100% { transform: translateX(-50%) scale(1); opacity: 1; }
+        .lose-result {
+            background: linear-gradient(135deg, #f44336, #c62828);
         }
         
-        @keyframes respinGlow {
-            0% { box-shadow: 0 0 10px #ffc107; }
-            100% { box-shadow: 0 0 30px #ffc107; }
-        }
-
-        #confetti {
+        #clock {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            z-index: 1000;
-            display: none;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+            padding: 10px 20px;
+            border-radius: 30px;
+            color: white;
+            font-size: 14px;
+            text-align: center;
+            white-space: nowrap;
+            z-index: 10;
         }
         
-        @media(max-width:600px){
+        @media (max-width: 600px) {
+            #game {
+                width: 250px;
+                height: 250px;
+            }
             #result_box {
-                min-width: 220px;
-                max-width: 90%;
-                font-size: 18px;
-                padding: 18px 25px;
-                top: 65%;
+                font-size: 14px;
+                padding: 10px 20px;
+                bottom: 80px;
             }
-            .clock-custom {
-                font-size: 10px !important;
-                padding: 10px 16px !important;
-                min-width: 160px !important;
-                top: 60% !important;
+            #clock {
+                font-size: 12px;
+                white-space: normal;
+                width: 90%;
+                text-align: center;
             }
         }
         
-        .clock-custom {
-            position: absolute !important;
-            top: calc(100% + 20px) !important;
-            left: 50% !important;
-            transform: translateX(-50%) !important;
-            padding: 12px 20px !important;
-            background: linear-gradient(135deg, rgba(0, 0, 0, 0.8), rgba(0, 0, 0, 0.6)) !important;
-            backdrop-filter: blur(10px) !important;
-            border: 2px solid rgba(255, 255, 255, 0.3) !important;
-            border-radius: 25px !important;
-            color: #ffffff !important;
-            font-size: 14px !important;
-            font-weight: 600 !important;
-            text-align: center !important;
-            white-space: normal !important;
-            word-break: break-word !important;
-            width: auto !important;
-            max-width: 90vw !important;
-            z-index: 5 !important;
-        }
-
-        .button-centered {
-            width: 60px;
-            height: 60px;
-            position: absolute !important;
-            top: 50% !important;
-            left: 50% !important;
+        .loading {
+            position: fixed;
+            top: 50%;
+            left: 50%;
             transform: translate(-50%, -50%);
-            z-index: 10 !important;
-            cursor: pointer !important;
-        }
-
-        .button-centered.disabled {
-            opacity: 0.5 !important;
-            cursor: not-allowed !important;
+            color: white;
+            font-size: 20px;
+            z-index: 1000;
         }
         
-        .button-centered.respin-active {
-            animation: pulseButton 1.5s ease-in-out infinite;
+        .bounce {
+            animation: bounce 0.3s ease;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateX(-50%) scale(1); }
+            50% { transform: translateX(-50%) scale(1.1); }
         }
     </style>
 </head>
-
-<body id="body-header">
+<body>
     <div id="game">
-        <img class="pin" id="pin" src="static/wheel_assets/pin.png">
-        <img class="wheel" src="static/wheel_assets/wheel.png">
-        <img class="button button-centered" id="disable" src="static/wheel_assets/button.png">
-        <p class="clock clock-custom" id="clock">🎡 جاري التحميل... 🎡</p>
+        <img class="pin" id="pin" src="static/wheel_assets/pin.png" onerror="this.style.display='none'">
+        <img class="wheel" id="wheel" src="static/wheel_assets/wheel.png" onerror="this.src='https://tareqawy.github.io/zeus-wheel/static/wheel_assets/wheel.png'">
+        <img class="button" id="spinBtn" src="static/wheel_assets/button.png" onerror="this.src='https://tareqawy.github.io/zeus-wheel/static/wheel_assets/button.png'">
     </div>
-
     <div id="result_box"></div>
-    <canvas id="confetti"></canvas>
+    <div id="clock">🎡 جاري التحميل... 🎡</div>
 
     <script>
-        // ============================================================
-        // الاتصال مع بوت التليجرام
-        // ============================================================
-        
-        let tg = window.TelegramWebApp;
-        tg.ready();
-        tg.expand();
-        
-        let userId = tg.initDataUnsafe?.user?.id || 'test';
-        let canSpin = false;
-        let hasRespin = false;
-        let isSpinning = false;
-        
-        // عناصر DOM
-        const wheel = document.querySelector('.wheel');
-        const startButton = document.querySelector('.button');
-        const arrow = document.querySelector('.pin');
-        const resultBox = document.getElementById('result_box');
-        const confettiCanvas = document.getElementById('confetti');
-        const clockElement = document.getElementById('clock');
-        
-        // ثوابت العجلة
-        const SEGMENT_ANGLE = 45;
-        const CALIBRATION = 22.5;
-        
-        // الصوت
-        let audio = new Audio('static/wheel_assets/tick.mp3');
-        let tickIntervalId = null;
-        let tickStartTime = 0;
-        
-        // ============================================================
-        // حساب زاوية التوقف للجائزة
-        // ============================================================
-        function calculateDegreeForPrize(prizeType) {
-            let prizeIndex = 4; // هارد لوك افتراضي
+        (function() {
+            // انتظار تحميل Telegram WebApp
+            let tg = null;
+            let userId = null;
+            let canSpin = true;
+            let isSpinning = false;
+            let hasRespin = false;
             
-            switch(prizeType) {
-                case 'respin':
-                    prizeIndex = 1;
-                    break;
-                case 'win_10000':
-                    prizeIndex = 2;
-                    break;
-                case 'hard_luck':
-                default:
-                    prizeIndex = 4;
-                    break;
-            }
+            const wheel = document.getElementById('wheel');
+            const spinBtn = document.getElementById('spinBtn');
+            const resultBox = document.getElementById('result_box');
+            const clockEl = document.getElementById('clock');
             
-            let targetSectorMid = (prizeIndex * SEGMENT_ANGLE) + (SEGMENT_ANGLE / 2);
-            let requiredAngle = (targetSectorMid - CALIBRATION + 360) % 360;
-            let fullRotations = 360 * (Math.floor(Math.random() * 8) + 8);
-            return fullRotations + requiredAngle;
-        }
-        
-        // ============================================================
-        // نظام الصوت
-        // ============================================================
-        function scheduleNextTick() {
-            if (tickIntervalId) clearTimeout(tickIntervalId);
-            
-            audio.currentTime = 0;
-            audio.play().catch(() => {});
-            
-            const elapsed = Date.now() - tickStartTime;
-            const progress = Math.min(elapsed / 5000, 1);
-            let nextDelay = 50 + progress * 300;
-            
-            tickIntervalId = setTimeout(scheduleNextTick, nextDelay);
-        }
-        
-        function playSound() {
-            tickStartTime = Date.now();
-            scheduleNextTick();
-        }
-        
-        function stopSound() {
-            if (tickIntervalId) {
-                clearTimeout(tickIntervalId);
-                tickIntervalId = null;
-            }
-            audio.pause();
-        }
-        
-        // ============================================================
-        // نظام الاحتفال
-        // ============================================================
-        function startCelebration() {
-            confettiCanvas.style.display = 'block';
-            const ctx = confettiCanvas.getContext('2d');
-            confettiCanvas.width = window.innerWidth;
-            confettiCanvas.height = window.innerHeight;
-            
-            let particles = [];
-            for (let i = 0; i < 100; i++) {
-                particles.push({
-                    x: Math.random() * confettiCanvas.width,
-                    y: -20,
-                    size: Math.random() * 8 + 4,
-                    color: `hsl(${Math.random() * 360}, 100%, 60%)`,
-                    speed: Math.random() * 5 + 3
-                });
-            }
-            
-            function draw() {
-                if (confettiCanvas.style.display === 'none') return;
-                ctx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
-                
-                let anyActive = false;
-                for (let p of particles) {
-                    p.y += p.speed;
-                    if (p.y < confettiCanvas.height + 50) {
-                        anyActive = true;
-                        ctx.fillStyle = p.color;
-                        ctx.fillRect(p.x, p.y, p.size, p.size);
-                    }
+            // محاولة الاتصال بـ Telegram WebApp
+            if (typeof window.TelegramWebApp !== 'undefined') {
+                tg = window.TelegramWebApp;
+                tg.ready();
+                tg.expand();
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    userId = tg.initDataUnsafe.user.id;
                 }
-                
-                if (anyActive) {
-                    requestAnimationFrame(draw);
-                } else {
-                    confettiCanvas.style.display = 'none';
-                }
-            }
-            
-            draw();
-            
-            setTimeout(() => {
-                confettiCanvas.style.display = 'none';
-            }, 5000);
-        }
-        
-        // ============================================================
-        // عرض النتيجة
-        // ============================================================
-        function showResult(prizeName, isWin, isRespin) {
-            resultBox.style.display = 'block';
-            resultBox.innerText = prizeName;
-            
-            if (isRespin) {
-                resultBox.className = 'respin-result';
-                startButton.classList.add('respin-active');
-            } else if (isWin) {
-                resultBox.className = 'win-result';
-                startButton.classList.remove('respin-active');
-                startCelebration();
+                console.log('✅ Telegram WebApp متصل');
             } else {
-                resultBox.className = 'lose-result';
-                startButton.classList.remove('respin-active');
+                console.log('⚠️ ليس داخل تليجرام - وضع اختبار');
+                // وضع اختبار للمتصفح العادي
+                tg = {
+                    ready: function() {},
+                    expand: function() {},
+                    sendData: function(data) { console.log('إرسال:', data); }
+                };
+                canSpin = true;
+                clockEl.innerText = '🎡 وضع الاختبار - اضغط للدوران 🎡';
+                spinBtn.classList.remove('disabled');
             }
             
-            setTimeout(() => {
-                resultBox.style.display = 'none';
-            }, 3000);
-        }
-        
-        // ============================================================
-        // تنفيذ الدوران
-        // ============================================================
-        function performSpin(targetDegree, prizeName, isWin, isRespin) {
-            if (isSpinning) return;
+            // ترتيب الجوائز
+            const SEGMENT_ANGLE = 45;
+            const CALIBRATION = 22.5;
             
-            isSpinning = true;
-            startButton.style.pointerEvents = 'none';
-            startButton.classList.add('disabled');
-            startButton.classList.remove('attention', 'respin-active');
-            clockElement.style.display = 'none';
-            
-            if (resultBox) {
-                resultBox.style.display = 'none';
-                resultBox.className = '';
+            function calculateDegreeForPrize(prizeType) {
+                let prizeIndex = 4; // هارد لوك افتراضي
+                switch(prizeType) {
+                    case 'respin': prizeIndex = 1; break;
+                    case 'win_10000': prizeIndex = 2; break;
+                    default: prizeIndex = 4;
+                }
+                let targetSectorMid = (prizeIndex * SEGMENT_ANGLE) + (SEGMENT_ANGLE / 2);
+                let requiredAngle = (targetSectorMid - CALIBRATION + 360) % 360;
+                let fullRotations = 360 * (Math.floor(Math.random() * 8) + 8);
+                return fullRotations + requiredAngle;
             }
             
-            // تطبيق الدوران
-            wheel.style.transition = 'all 5s cubic-bezier(0.2, 0.9, 0.1, 1)';
-            wheel.style.transform = `rotate(${targetDegree}deg)`;
-            
-            // تشغيل الصوت
-            playSound();
-            
-            // انتظار انتهاء الدوران
-            const finishSpin = () => {
-                stopSound();
-                wheel.style.transition = 'none';
-                wheel.style.transform = `rotate(${targetDegree % 360}deg)`;
-                arrow.classList.add('bounce');
-                
-                showResult(prizeName, isWin, isRespin);
+            function showResult(prizeName, isWin, isRespin) {
+                resultBox.style.display = 'block';
+                resultBox.innerText = prizeName;
                 
                 if (isRespin) {
-                    clockElement.innerText = '🎉 لديك فرصة إضافية! اضغط للدوران 🎉';
-                    startButton.classList.remove('disabled');
-                    startButton.classList.add('attention', 'respin-active');
-                    canSpin = true;
-                    hasRespin = true;
+                    resultBox.className = 'respin-result';
+                } else if (isWin) {
+                    resultBox.className = 'win-result';
                 } else {
-                    canSpin = false;
-                    startButton.classList.add('disabled');
-                    startButton.classList.remove('attention', 'respin-active');
-                    clockElement.innerText = '⏰ انتهت دوراتك اليوم. عاود غداً!';
+                    resultBox.className = 'lose-result';
                 }
                 
-                clockElement.style.display = 'block';
-                isSpinning = false;
-                wheel.removeEventListener('transitionend', finishSpin);
-                
-                // إعلام البوت بانتهاء الدوران
-                tg.sendData(JSON.stringify({ action: 'spin_done' }));
-            };
+                setTimeout(() => {
+                    resultBox.style.display = 'none';
+                }, 3000);
+            }
             
-            wheel.addEventListener('transitionend', finishSpin, { once: true });
-            
-            setTimeout(() => {
-                if (isSpinning) finishSpin();
-            }, 5500);
-        }
-        
-        // ============================================================
-        // طلب الحالة من البوت
-        // ============================================================
-        function getStatus() {
-            tg.sendData(JSON.stringify({ action: 'get_status' }));
-        }
-        
-        // ============================================================
-        // استقبال البيانات من البوت
-        // ============================================================
-        window.addEventListener('message', function(event) {
-            try {
-                const data = JSON.parse(event.data);
-                console.log('📩 من البوت:', data);
+            function performSpin(targetDegree, prizeName, isWin, isRespin) {
+                if (isSpinning) return;
+                isSpinning = true;
+                spinBtn.classList.add('disabled');
                 
-                if (data.action === 'status_response') {
-                    canSpin = data.can_spin;
-                    hasRespin = data.has_respin;
-                    clockElement.innerText = data.message;
+                wheel.style.transition = 'transform 5s cubic-bezier(0.2, 0.9, 0.1, 1)';
+                wheel.style.transform = `rotate(${targetDegree}deg)`;
+                
+                setTimeout(() => {
+                    wheel.style.transition = 'none';
+                    wheel.style.transform = `rotate(${targetDegree % 360}deg)`;
                     
-                    if (canSpin) {
-                        startButton.classList.remove('disabled');
-                        startButton.classList.add('attention');
+                    showResult(prizeName, isWin, isRespin);
+                    
+                    if (isRespin) {
+                        hasRespin = true;
+                        canSpin = true;
+                        clockEl.innerText = '🎉 لديك فرصة إضافية! اضغط للدوران 🎉';
+                        spinBtn.classList.remove('disabled');
                     } else {
-                        startButton.classList.add('disabled');
-                        startButton.classList.remove('attention');
+                        canSpin = false;
+                        clockEl.innerText = '⏰ انتهت دوراتك اليوم. عاود غداً!';
+                        spinBtn.classList.add('disabled');
                     }
+                    
+                    isSpinning = false;
+                    
+                    // إعلام البوت
+                    if (tg) tg.sendData(JSON.stringify({ action: 'spin_done' }));
+                }, 5000);
+            }
+            
+            // طلب الحالة من البوت
+            function getStatus() {
+                if (tg) {
+                    tg.sendData(JSON.stringify({ action: 'get_status' }));
+                }
+            }
+            
+            // استقبال البيانات من البوت
+            window.addEventListener('message', function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                    console.log('📩 من البوت:', data);
+                    
+                    if (data.action === 'status_response') {
+                        canSpin = data.can_spin;
+                        hasRespin = data.has_respin || false;
+                        clockEl.innerText = data.message || (canSpin ? '🎡 اضغط للدوران 🎡' : '⏰ عاود غداً!');
+                        if (canSpin) {
+                            spinBtn.classList.remove('disabled');
+                        } else {
+                            spinBtn.classList.add('disabled');
+                        }
+                    }
+                    
+                    if (data.action === 'spin_result') {
+                        const targetDegree = calculateDegreeForPrize(data.prize_type);
+                        performSpin(targetDegree, data.prize_name, data.is_win, data.is_respin);
+                    }
+                    
+                    if (data.action === 'error') {
+                        clockEl.innerText = `❌ ${data.message}`;
+                        spinBtn.classList.remove('disabled');
+                        isSpinning = false;
+                    }
+                    
+                } catch(e) {
+                    console.log('خطأ في معالجة الرسالة:', e);
+                }
+            });
+            
+            // زر الدوران
+            spinBtn.addEventListener('click', function() {
+                if (isSpinning) {
+                    clockEl.innerText = '⏳ العجلة تدور حالياً...';
+                    return;
                 }
                 
-                if (data.action === 'spin_result') {
-                    const targetDegree = calculateDegreeForPrize(data.prize_type);
-                    performSpin(targetDegree, data.prize_name, data.is_win, data.is_respin);
+                if (!canSpin && !hasRespin) {
+                    clockEl.innerText = '⏰ لا توجد دورات متاحة اليوم!';
+                    return;
                 }
                 
-            } catch(e) {
-                console.log('خطأ في معالجة الرسالة:', e);
-            }
-        });
-        
-        // ============================================================
-        // زر الدوران
-        // ============================================================
-        startButton.addEventListener('click', () => {
-            if (isSpinning) {
-                tg.sendData(JSON.stringify({ action: 'error', message: 'العجلة تدور حالياً' }));
-                return;
-            }
+                if (hasRespin) {
+                    tg.sendData(JSON.stringify({ action: 'use_respin' }));
+                    hasRespin = false;
+                } else {
+                    tg.sendData(JSON.stringify({ action: 'spin' }));
+                }
+                
+                spinBtn.classList.add('disabled');
+                clockEl.innerText = '🎡 جاري الدوران... 🎡';
+            });
             
-            if (!canSpin && !hasRespin) {
-                clockElement.innerText = '⏰ لا توجد دورات متاحة اليوم. عاود غداً!';
-                return;
-            }
+            // بدء التشغيل
+            setTimeout(() => {
+                getStatus();
+                clockEl.innerText = '🎡 اضغط على الزر للدوران 🎡';
+                if (canSpin) spinBtn.classList.remove('disabled');
+            }, 500);
             
-            if (hasRespin) {
-                tg.sendData(JSON.stringify({ action: 'use_respin' }));
-                hasRespin = false;
-            } else {
-                tg.sendData(JSON.stringify({ action: 'spin' }));
-            }
-            
-            startButton.classList.add('disabled');
-            startButton.classList.remove('attention');
-            clockElement.innerText = '🎡 جاري الدوران... 🎡';
-        });
-        
-        // إزالة تأثير الارتداد
-        arrow.addEventListener('animationend', () => {
-            arrow.classList.remove('bounce');
-        });
-        
-        // ============================================================
-        // بدء التشغيل
-        // ============================================================
-        window.addEventListener('DOMContentLoaded', () => {
-            wheel.style.transform = 'rotate(0deg)';
-            getStatus();
             console.log('✅ العجلة جاهزة!');
-        });
-        
-        window.addEventListener('resize', () => {
-            if (confettiCanvas.style.display !== 'none') {
-                confettiCanvas.width = window.innerWidth;
-                confettiCanvas.height = window.innerHeight;
-            }
-        });
+        })();
     </script>
 </body>
-
 </html>
