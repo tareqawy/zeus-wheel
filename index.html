@@ -2,8 +2,8 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>عجلة الحظ - TAEMBOT</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+    <title>عجلة الحظ</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -13,7 +13,7 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            font-family: 'Segoe UI', sans-serif;
+            font-family: Arial, sans-serif;
             padding: 20px;
         }
         #game {
@@ -59,24 +59,21 @@
             transform: translateX(-50%);
             padding: 12px 24px;
             background: rgba(0,0,0,0.85);
-            backdrop-filter: blur(10px);
             border-radius: 50px;
             color: white;
             font-size: 16px;
-            font-weight: bold;
             display: none;
             z-index: 100;
         }
-        .win-result { background: linear-gradient(135deg, #4caf50, #2e7d32); box-shadow: 0 0 15px #4caf50; }
-        .respin-result { background: linear-gradient(135deg, #ffc107, #ff8f00); box-shadow: 0 0 15px #ffc107; }
-        .lose-result { background: linear-gradient(135deg, #f44336, #c62828); }
+        .win-result { background: #4caf50; }
+        .respin-result { background: #ffc107; }
+        .lose-result { background: #f44336; }
         #clock {
             position: fixed;
             bottom: 30px;
             left: 50%;
             transform: translateX(-50%);
             background: rgba(0,0,0,0.7);
-            backdrop-filter: blur(10px);
             padding: 8px 16px;
             border-radius: 30px;
             color: white;
@@ -85,8 +82,7 @@
         }
         @media (max-width: 600px) {
             #game { width: 250px; height: 250px; }
-            #result_box { font-size: 14px; padding: 8px 16px; bottom: 80px; white-space: normal; max-width: 90%; }
-            #clock { font-size: 11px; white-space: normal; width: 90%; }
+            #result_box { font-size: 14px; bottom: 80px; }
         }
     </style>
 </head>
@@ -97,18 +93,18 @@
         <img class="button" id="spinBtn" src="static/wheel_assets/button.png">
     </div>
     <div id="result_box"></div>
-    <div id="clock">🎡 مرحباً! اضغط للدوران 🎡</div>
+    <div id="clock">🎡 اضغط للدوران 🎡</div>
 
     <script>
-        // الإعدادات الأمنية
         const API_URL = "http://2.27.62.215:5000";
-        const API_KEY = "X7kL9mP2qR4tU8wY1zA3bC5dE6fG7hJ9";  // نفس الموجود في السيرفر
         
         let tg = window.TelegramWebApp;
-        tg.ready();
-        tg.expand();
+        if (tg) {
+            tg.ready();
+            tg.expand();
+        }
         
-        let userId = tg.initDataUnsafe?.user?.id || null;
+        let userId = tg?.initDataUnsafe?.user?.id || 'test_' + Date.now();
         let isSpinning = false;
         let canSpin = true;
         
@@ -122,11 +118,8 @@
         
         function calculateDegreeForPrize(prizeType) {
             let prizeIndex = 4;
-            switch(prizeType) {
-                case 'respin': prizeIndex = 1; break;
-                case 'win': prizeIndex = 2; break;
-                default: prizeIndex = 4;
-            }
+            if (prizeType === 'respin') prizeIndex = 1;
+            else if (prizeType === 'win') prizeIndex = 2;
             let targetSectorMid = (prizeIndex * SEGMENT_ANGLE) + (SEGMENT_ANGLE / 2);
             let requiredAngle = (targetSectorMid - CALIBRATION + 360) % 360;
             let fullRotations = 360 * (Math.floor(Math.random() * 9) + 8);
@@ -139,20 +132,14 @@
             spinBtn.classList.add('disabled');
             
             const targetDegree = calculateDegreeForPrize(prizeType);
-            
-            wheel.style.transition = 'transform 4s cubic-bezier(0.2, 0.9, 0.1, 1)';
             wheel.style.transform = `rotate(${targetDegree}deg)`;
             
             setTimeout(() => {
-                wheel.style.transition = 'none';
-                wheel.style.transform = `rotate(${targetDegree % 360}deg)`;
-                
                 resultBox.style.display = 'block';
                 resultBox.innerText = prizeName;
                 if (isWin) resultBox.className = 'win-result';
                 else if (isRespin) resultBox.className = 'respin-result';
                 else resultBox.className = 'lose-result';
-                
                 setTimeout(() => { resultBox.style.display = 'none'; }, 3000);
                 
                 if (isRespin) {
@@ -162,95 +149,59 @@
                 } else {
                     canSpin = false;
                     clockEl.innerText = '⏰ عاود غداً!';
-                    spinBtn.classList.add('disabled');
                 }
-                
                 isSpinning = false;
             }, 4000);
         }
         
         async function getStatus() {
-            if (!userId) {
-                clockEl.innerText = '❌ لا يمكن تحديد هويتك';
-                return;
-            }
-            
             try {
-                const response = await fetch(`${API_URL}/status?user_id=${userId}`, {
-                    headers: { 'X-API-Key': API_KEY }
-                });
-                const data = await response.json();
+                const res = await fetch(`${API_URL}/status?user_id=${userId}`);
+                const data = await res.json();
                 canSpin = data.can_spin;
                 clockEl.innerText = data.message;
                 if (canSpin) spinBtn.classList.remove('disabled');
-                else spinBtn.classList.add('disabled');
-            } catch(e) {
-                console.error('خطأ:', e);
-                clockEl.innerText = '⚠️ مشكلة في الاتصال';
-            }
+            } catch(e) { console.error(e); }
         }
         
         async function doSpin() {
-            if (!userId) {
-                clockEl.innerText = '❌ لا يمكن تحديد هويتك';
-                return;
-            }
+            if (!canSpin || isSpinning) return;
+            isSpinning = true;
+            spinBtn.classList.add('disabled');
+            clockEl.innerText = '🎡 جاري الدوران...';
             
             try {
-                const response = await fetch(`${API_URL}/spin`, {
+                const res = await fetch(`${API_URL}/spin`, {
                     method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-API-Key': API_KEY
-                    },
+                    headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ user_id: userId })
                 });
-                
-                if (response.status === 429) {
-                    clockEl.innerText = '⏰太多 طلبات! انتظر قليلاً';
-                    spinBtn.classList.remove('disabled');
-                    isSpinning = false;
-                    return;
-                }
-                
-                const data = await response.json();
-                
+                const data = await res.json();
                 if (data.error) {
-                    clockEl.innerText = `❌ ${data.error}`;
+                    clockEl.innerText = '❌ ' + data.error;
                     spinBtn.classList.remove('disabled');
                     isSpinning = false;
                     return;
                 }
-                
                 performSpin(data.prize_name, data.prize_type, data.is_win, data.is_respin);
-                
-                // إرسال النتيجة مع التوقيع إلى البوت
-                tg.sendData(JSON.stringify({
-                    action: 'spin_result',
-                    prize_name: data.prize_name,
-                    prize_value: data.prize_value,
-                    signature: data.signature,
-                    user_id: userId
-                }));
-                
+                if (tg && data.prize_value > 0) {
+                    tg.sendData(JSON.stringify({
+                        action: 'spin_result',
+                        prize_name: data.prize_name,
+                        prize_value: data.prize_value,
+                        signature: data.signature,
+                        user_id: userId
+                    }));
+                }
             } catch(e) {
-                console.error('خطأ:', e);
-                clockEl.innerText = '❌ حدث خطأ، حاول مرة أخرى';
+                console.error(e);
+                clockEl.innerText = '❌ خطأ في الاتصال';
                 spinBtn.classList.remove('disabled');
                 isSpinning = false;
             }
         }
         
-        spinBtn.addEventListener('click', () => {
-            if (isSpinning) { clockEl.innerText = '⏳ العجلة تدور...'; return; }
-            if (!canSpin) { clockEl.innerText = '⏰ لا توجد دورات!'; return; }
-            
-            isSpinning = true;
-            spinBtn.classList.add('disabled');
-            clockEl.innerText = '🎡 جاري الدوران... 🎡';
-            doSpin();
-        });
-        
+        spinBtn.onclick = () => { if (canSpin && !isSpinning) doSpin(); };
         getStatus();
     </script>
 </body>
