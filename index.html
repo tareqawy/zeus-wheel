@@ -2,8 +2,8 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>عجلة الحظ</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>عجلة الحظ - TAEMBOT</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -82,7 +82,6 @@
             color: white;
             font-size: 13px;
             text-align: center;
-            white-space: nowrap;
         }
         @media (max-width: 600px) {
             #game { width: 250px; height: 250px; }
@@ -101,14 +100,15 @@
     <div id="clock">🎡 مرحباً! اضغط للدوران 🎡</div>
 
     <script>
-        // إعدادات السيرفر - غير الرابط إلى VPS حقك
+        // الإعدادات الأمنية
         const API_URL = "http://2.27.62.215:5000";
+        const API_KEY = "X7kL9mP2qR4tU8wY1zA3bC5dE6fG7hJ9";  // نفس الموجود في السيرفر
         
         let tg = window.TelegramWebApp;
         tg.ready();
         tg.expand();
         
-        let userId = tg.initDataUnsafe?.user?.id || 'test_' + Date.now();
+        let userId = tg.initDataUnsafe?.user?.id || null;
         let isSpinning = false;
         let canSpin = true;
         
@@ -117,7 +117,6 @@
         const resultBox = document.getElementById('result_box');
         const clockEl = document.getElementById('clock');
         
-        // زوايا العجلة
         const SEGMENT_ANGLE = 45;
         const CALIBRATION = 22.5;
         
@@ -171,8 +170,15 @@
         }
         
         async function getStatus() {
+            if (!userId) {
+                clockEl.innerText = '❌ لا يمكن تحديد هويتك';
+                return;
+            }
+            
             try {
-                const response = await fetch(`${API_URL}/status?user_id=${userId}`);
+                const response = await fetch(`${API_URL}/status?user_id=${userId}`, {
+                    headers: { 'X-API-Key': API_KEY }
+                });
                 const data = await response.json();
                 canSpin = data.can_spin;
                 clockEl.innerText = data.message;
@@ -185,12 +191,28 @@
         }
         
         async function doSpin() {
+            if (!userId) {
+                clockEl.innerText = '❌ لا يمكن تحديد هويتك';
+                return;
+            }
+            
             try {
                 const response = await fetch(`${API_URL}/spin`, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-API-Key': API_KEY
+                    },
                     body: JSON.stringify({ user_id: userId })
                 });
+                
+                if (response.status === 429) {
+                    clockEl.innerText = '⏰太多 طلبات! انتظر قليلاً';
+                    spinBtn.classList.remove('disabled');
+                    isSpinning = false;
+                    return;
+                }
+                
                 const data = await response.json();
                 
                 if (data.error) {
@@ -202,11 +224,13 @@
                 
                 performSpin(data.prize_name, data.prize_type, data.is_win, data.is_respin);
                 
-                // إرسال إشعار للبوت (اختياري)
+                // إرسال النتيجة مع التوقيع إلى البوت
                 tg.sendData(JSON.stringify({
                     action: 'spin_result',
-                    prize: data.prize_name,
-                    value: data.prize_value
+                    prize_name: data.prize_name,
+                    prize_value: data.prize_value,
+                    signature: data.signature,
+                    user_id: userId
                 }));
                 
             } catch(e) {
@@ -227,7 +251,6 @@
             doSpin();
         });
         
-        // بدء التشغيل
         getStatus();
     </script>
 </body>
