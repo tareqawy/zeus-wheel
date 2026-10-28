@@ -6,528 +6,156 @@
     <title>🎡 عجلة الحظ - ZEUSBOT</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-        }
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
         body {
             font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
             background: radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d1a 100%);
             min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 20px;
-            color: #fff;
-            overflow: hidden;
-            user-select: none;
-            position: relative;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            padding: 20px; color: #fff; overflow: hidden; user-select: none; position: relative;
         }
 
-        /* ═══════════════════════════════════════════
-           خلفية متحركة: نجوم + جزيئات متوهجة
-           ═══════════════════════════════════════════ */
-        .stars {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            pointer-events: none;
-            z-index: 0;
-        }
+        .stars { position: fixed; top: 0; left: 0; right: 0; bottom: 0; pointer-events: none; z-index: 0; }
+        .star { position: absolute; background: #fff; border-radius: 50%; animation: twinkle 2s infinite ease-in-out; }
+        @keyframes twinkle { 0%,100%{opacity:.2;transform:scale(.8)} 50%{opacity:1;transform:scale(1.2)} }
 
-        .star {
-            position: absolute;
-            background: #fff;
-            border-radius: 50%;
-            animation: twinkle 2s infinite ease-in-out;
-        }
-
-        @keyframes twinkle {
-            0%, 100% { opacity: 0.2; transform: scale(0.8); }
-            50% { opacity: 1; transform: scale(1.2); }
-        }
-
-        .glow-orb {
-            position: fixed;
-            width: 200px;
-            height: 200px;
-            border-radius: 50%;
+        .glow-orb { position: fixed; width: 200px; height: 200px; border-radius: 50%;
             background: radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
-            animation: floatOrb 8s infinite ease-in-out;
-        }
+            pointer-events: none; z-index: 0; animation: floatOrb 8s infinite ease-in-out; }
+        @keyframes floatOrb { 0%,100%{transform:translate(0,0)} 50%{transform:translate(30px,-30px)} }
 
-        @keyframes floatOrb {
-            0%, 100% { transform: translate(0, 0); }
-            50% { transform: translate(30px, -30px); }
-        }
+        .container { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; }
 
-        /* ═══════════════════════════════════════════
-           المحتوى الرئيسي
-           ═══════════════════════════════════════════ */
-        .container {
-            position: relative;
-            z-index: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .header {
-            text-align: center;
-            margin-bottom: 20px;
-            animation: fadeInDown 0.8s ease;
-        }
-
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-30px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .header h1 {
-            font-size: 28px;
-            margin-bottom: 8px;
+        .header { text-align: center; margin-bottom: 20px; animation: fadeInDown 0.8s ease; }
+        @keyframes fadeInDown { from{opacity:0;transform:translateY(-30px)} to{opacity:1;transform:translateY(0)} }
+        .header h1 { font-size: 28px; margin-bottom: 8px;
             background: linear-gradient(45deg, #ffd700, #ff8c00, #ffd700);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            background-size: 200% auto;
-            animation: shineText 3s linear infinite;
-            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));
-        }
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            background-size: 200% auto; animation: shineText 3s linear infinite;
+            filter: drop-shadow(0 0 15px rgba(255,215,0,0.5)); }
+        @keyframes shineText { to { background-position: 200% center; } }
+        .header p { font-size: 13px; color: #a0a0c0; }
 
-        @keyframes shineText {
-            to { background-position: 200% center; }
-        }
+        .wheel-wrapper { position: relative; width: 340px; height: 340px; margin: 15px 0;
+            display: flex; align-items: center; justify-content: center; }
 
-        .header p {
-            font-size: 13px;
-            color: #a0a0c0;
-        }
-
-        /* ═══════════════════════════════════════════
-           حاوية العجلة + توهج
-           ═══════════════════════════════════════════ */
-        .wheel-wrapper {
-            position: relative;
-            width: 340px;
-            height: 340px;
-            margin: 15px 0;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .wheel-glow {
-            position: absolute;
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
+        .wheel-glow { position: absolute; width: 100%; height: 100%; border-radius: 50%;
             background: radial-gradient(circle, rgba(255,215,0,0.4) 0%, transparent 70%);
-            animation: pulseGlow 2s infinite ease-in-out;
-            z-index: 0;
-        }
+            animation: pulseGlow 2s infinite ease-in-out; z-index: 0; }
+        @keyframes pulseGlow { 0%,100%{transform:scale(1);opacity:.6} 50%{transform:scale(1.15);opacity:1} }
+        .spinning .wheel-glow { animation: pulseGlow 0.4s infinite ease-in-out;
+            background: radial-gradient(circle, rgba(255,140,0,0.6) 0%, transparent 70%); }
 
-        @keyframes pulseGlow {
-            0%, 100% { transform: scale(1); opacity: 0.6; }
-            50% { transform: scale(1.15); opacity: 1; }
-        }
+        .pointer { position: absolute; top: -15px; left: 50%; transform: translateX(-50%);
+            width: 0; height: 0; border-left: 22px solid transparent; border-right: 22px solid transparent;
+            border-top: 45px solid #ff3b3b; z-index: 10;
+            filter: drop-shadow(0 0 15px rgba(255,59,59,1)) drop-shadow(0 0 30px rgba(255,59,59,0.6));
+            animation: pointerBounce 1s infinite ease-in-out; }
+        @keyframes pointerBounce { 0%,100%{transform:translateX(-50%) translateY(0)} 50%{transform:translateX(-50%) translateY(-5px)} }
+        .spinning .pointer { animation: pointerShake 0.1s infinite linear; }
+        @keyframes pointerShake { 0%,100%{transform:translateX(-50%) rotate(0)} 25%{transform:translateX(-50%) rotate(-5deg)} 75%{transform:translateX(-50%) rotate(5deg)} }
 
-        .spinning .wheel-glow {
-            animation: pulseGlow 0.4s infinite ease-in-out;
-            background: radial-gradient(circle, rgba(255,140,0,0.6) 0%, transparent 70%);
-        }
-
-        /* المؤشر (السهم الأحمر) */
-        .pointer {
-            position: absolute;
-            top: -15px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 0;
-            height: 0;
-            border-left: 22px solid transparent;
-            border-right: 22px solid transparent;
-            border-top: 45px solid #ff3b3b;
-            z-index: 10;
-            filter: drop-shadow(0 0 15px rgba(255, 59, 59, 1))
-                    drop-shadow(0 0 30px rgba(255, 59, 59, 0.6));
-            animation: pointerBounce 1s infinite ease-in-out;
-        }
-
-        @keyframes pointerBounce {
-            0%, 100% { transform: translateX(-50%) translateY(0); }
-            50% { transform: translateX(-50%) translateY(-5px); }
-        }
-
-        .spinning .pointer {
-            animation: pointerShake 0.1s infinite linear;
-        }
-
-        @keyframes pointerShake {
-            0%, 100% { transform: translateX(-50%) rotate(0deg); }
-            25% { transform: translateX(-50%) rotate(-5deg); }
-            75% { transform: translateX(-50%) rotate(5deg); }
-        }
-
-        /* الإطار الذهبي */
-        .wheel-outer {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
+        .wheel-outer { width: 100%; height: 100%; border-radius: 50%;
             background: conic-gradient(from 0deg, #ffd700, #ff8c00, #ffd700, #ff8c00, #ffd700);
             padding: 12px;
-            box-shadow: 
-                0 0 50px rgba(255, 215, 0, 0.7),
-                0 0 100px rgba(255, 140, 0, 0.5),
-                0 0 150px rgba(255, 215, 0, 0.3),
-                inset 0 0 30px rgba(0, 0, 0, 0.5);
-            position: relative;
-            z-index: 2;
-            animation: rotateBorder 8s linear infinite;
-        }
+            box-shadow: 0 0 50px rgba(255,215,0,0.7), 0 0 100px rgba(255,140,0,0.5),
+                0 0 150px rgba(255,215,0,0.3), inset 0 0 30px rgba(0,0,0,0.5);
+            position: relative; z-index: 2; animation: rotateBorder 8s linear infinite; }
+        @keyframes rotateBorder { to { transform: rotate(360deg); } }
 
-        @keyframes rotateBorder {
-            to { transform: rotate(360deg); }
-        }
+        .wheel { width: 100%; height: 100%; border-radius: 50%; position: relative;
+            overflow: hidden; background: #1a1a2e; }
+        .wheel.spin { transition: transform 4.5s cubic-bezier(0.15, 0.9, 0.15, 1); }
 
-        .wheel {
-            width: 100%;
-            height: 100%;
-            border-radius: 50%;
-            position: relative;
-            overflow: hidden;
-            background: #1a1a2e;
-        }
+        .wheel-segment { position: absolute; width: 50%; height: 50%; top: 0; left: 50%;
+            transform-origin: 0% 100%; display: flex; align-items: center; justify-content: center;
+            padding-left: 18%; padding-right: 8%; font-size: 12px; font-weight: 900;
+            text-align: center; line-height: 1.2; border: 2px solid rgba(255,255,255,0.15);
+            overflow: hidden; text-shadow: 0 2px 4px rgba(0,0,0,0.4); }
 
-        /* دوران العجلة */
-        .wheel.spin {
-            transition: transform 4.5s cubic-bezier(0.15, 0.9, 0.15, 1);
-        }
-
-        /* القطاعات */
-        .wheel-segment {
-            position: absolute;
-            width: 50%;
-            height: 50%;
-            top: 0;
-            left: 50%;
-            transform-origin: 0% 100%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding-left: 18%;
-            padding-right: 8%;
-            font-size: 12px;
-            font-weight: 900;
-            text-align: center;
-            line-height: 1.2;
-            border: 2px solid rgba(255, 255, 255, 0.15);
-            overflow: hidden;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
-        }
-
-        /* المركز */
-        .wheel-center {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            width: 75px;
-            height: 75px;
-            border-radius: 50%;
+        .wheel-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            width: 75px; height: 75px; border-radius: 50%;
             background: radial-gradient(circle at 30% 30%, #ffe066, #ffd700, #ff8c00);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 34px;
-            box-shadow: 
-                0 0 25px rgba(255, 215, 0, 1),
-                0 0 50px rgba(255, 140, 0, 0.8),
-                inset 0 0 15px rgba(255, 255, 255, 0.5),
-                inset 0 -5px 15px rgba(0, 0, 0, 0.3);
-            z-index: 5;
-            border: 4px solid #fff;
-            animation: centerPulse 1.5s infinite ease-in-out;
-        }
+            display: flex; align-items: center; justify-content: center; font-size: 34px;
+            box-shadow: 0 0 25px rgba(255,215,0,1), 0 0 50px rgba(255,140,0,0.8),
+                inset 0 0 15px rgba(255,255,255,0.5), inset 0 -5px 15px rgba(0,0,0,0.3);
+            z-index: 5; border: 4px solid #fff; animation: centerPulse 1.5s infinite ease-in-out; }
+        @keyframes centerPulse { 0%,100%{transform:translate(-50%,-50%) scale(1)} 50%{transform:translate(-50%,-50%) scale(1.08)} }
+        .spinning .wheel-center { animation: centerSpin 0.2s infinite linear; }
+        @keyframes centerSpin { 0%,100%{transform:translate(-50%,-50%) rotate(-5deg) scale(1.1)} 50%{transform:translate(-50%,-50%) rotate(5deg) scale(1.1)} }
 
-        @keyframes centerPulse {
-            0%, 100% { transform: translate(-50%, -50%) scale(1); }
-            50% { transform: translate(-50%, -50%) scale(1.08); }
-        }
-
-        .spinning .wheel-center {
-            animation: centerSpin 0.2s infinite linear;
-        }
-
-        @keyframes centerSpin {
-            0%, 100% { transform: translate(-50%, -50%) rotate(-5deg) scale(1.1); }
-            50% { transform: translate(-50%, -50%) rotate(5deg) scale(1.1); }
-        }
-
-        /* ═══════════════════════════════════════════
-           زر الدوران
-           ═══════════════════════════════════════════ */
-        .spin-btn {
-            margin-top: 25px;
-            padding: 20px 65px;
-            font-size: 22px;
-            font-weight: 900;
-            color: #fff;
-            background: linear-gradient(45deg, #ff3b3b, #ff8c00, #ffd700, #ff8c00, #ff3b3b);
-            background-size: 300% 100%;
-            border: none;
-            border-radius: 60px;
-            cursor: pointer;
-            box-shadow: 
-                0 10px 30px rgba(255, 59, 59, 0.6),
-                0 0 40px rgba(255, 140, 0, 0.4),
-                inset 0 -4px 15px rgba(0, 0, 0, 0.3);
-            transition: all 0.3s ease;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            position: relative;
-            overflow: hidden;
-            animation: btnShine 3s infinite linear;
-            z-index: 10;
-        }
-
-        @keyframes btnShine {
-            0% { background-position: 0% center; }
-            100% { background-position: 300% center; }
-        }
-
-        .spin-btn::before {
-            content: '';
-            position: absolute;
-            top: -50%;
-            left: -50%;
-            width: 200%;
-            height: 200%;
+        .spin-btn { margin-top: 25px; padding: 20px 65px; font-size: 22px; font-weight: 900;
+            color: #fff; background: linear-gradient(45deg, #ff3b3b, #ff8c00, #ffd700, #ff8c00, #ff3b3b);
+            background-size: 300% 100%; border: none; border-radius: 60px; cursor: pointer;
+            box-shadow: 0 10px 30px rgba(255,59,59,0.6), 0 0 40px rgba(255,140,0,0.4),
+                inset 0 -4px 15px rgba(0,0,0,0.3);
+            transition: all 0.3s ease; text-transform: uppercase; letter-spacing: 2px;
+            position: relative; overflow: hidden; animation: btnShine 3s infinite linear; z-index: 10; }
+        @keyframes btnShine { 0%{background-position:0% center} 100%{background-position:300% center} }
+        .spin-btn::before { content: ''; position: absolute; top: -50%; left: -50%;
+            width: 200%; height: 200%;
             background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%);
-            transform: rotate(45deg);
-            animation: btnShimmer 2s infinite;
-        }
+            transform: rotate(45deg); animation: btnShimmer 2s infinite; }
+        @keyframes btnShimmer { 0%{transform:translateX(-100%) rotate(45deg)} 100%{transform:translateX(100%) rotate(45deg)} }
+        .spin-btn:not(:disabled):active { transform: scale(0.95); }
+        .spin-btn:not(:disabled):hover { transform: translateY(-4px);
+            box-shadow: 0 15px 40px rgba(255,59,59,0.8), 0 0 60px rgba(255,140,0,0.6); }
+        .spin-btn:disabled { background: linear-gradient(45deg, #555, #333); cursor: not-allowed;
+            box-shadow: none; opacity: 0.6; animation: none; }
+        .spin-btn:disabled::before { display: none; }
 
-        @keyframes btnShimmer {
-            0% { transform: translateX(-100%) rotate(45deg); }
-            100% { transform: translateX(100%) rotate(45deg); }
-        }
+        .status { margin-top: 20px; font-size: 17px; color: #ffd700; text-align: center;
+            min-height: 26px; font-weight: bold; text-shadow: 0 0 15px rgba(255,215,0,0.8);
+            animation: fadeIn 0.5s; }
+        .status.error { color: #ff3b3b; text-shadow: 0 0 15px rgba(255,59,59,0.8); }
+        .status.success { color: #4caf50; text-shadow: 0 0 15px rgba(76,175,80,0.8); }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
 
-        .spin-btn:not(:disabled):active {
-            transform: scale(0.95);
-        }
+        .confetti { position: fixed; width: 12px; height: 12px; z-index: 999;
+            pointer-events: none; opacity: 0; }
+        @keyframes confettiFall { 0%{transform:translateY(-100vh) rotate(0);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
 
-        .spin-btn:not(:disabled):hover {
-            transform: translateY(-4px);
-            box-shadow: 
-                0 15px 40px rgba(255, 59, 59, 0.8),
-                0 0 60px rgba(255, 140, 0, 0.6);
-        }
+        .result-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center;
+            z-index: 1000; padding: 20px; backdrop-filter: blur(10px); }
+        .result-modal.show { display: flex; animation: fadeIn 0.3s ease; }
 
-        .spin-btn:disabled {
-            background: linear-gradient(45deg, #555, #333);
-            cursor: not-allowed;
-            box-shadow: none;
-            opacity: 0.6;
-            animation: none;
-        }
+        .result-content { background: linear-gradient(135deg, #2a2a4e, #1a1a2e);
+            border: 3px solid #ffd700; border-radius: 25px; padding: 35px 30px; text-align: center;
+            max-width: 380px; width: 100%;
+            box-shadow: 0 0 60px rgba(255,215,0,0.8), inset 0 0 20px rgba(255,215,0,0.2);
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
+        @keyframes popIn { from{transform:scale(.3) rotate(-10deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
 
-        .spin-btn:disabled::before {
-            display: none;
-        }
+        .result-emoji { font-size: 80px; margin-bottom: 15px; display: block;
+            animation: emojiBounce 1s infinite; filter: drop-shadow(0 0 20px rgba(255,215,0,0.8)); }
+        @keyframes emojiBounce { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-10px) scale(1.1)} }
 
-        /* ═══════════════════════════════════════════
-           حالة + نص
-           ═══════════════════════════════════════════ */
-        .status {
-            margin-top: 20px;
-            font-size: 17px;
-            color: #ffd700;
-            text-align: center;
-            min-height: 26px;
-            font-weight: bold;
-            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
-            animation: fadeIn 0.5s;
-        }
-
-        .status.error { color: #ff3b3b; text-shadow: 0 0 15px rgba(255, 59, 59, 0.8); }
-        .status.success { color: #4caf50; text-shadow: 0 0 15px rgba(76, 175, 80, 0.8); }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        /* ═══════════════════════════════════════════
-           قصاصات الاحتفال (Confetti)
-           ═══════════════════════════════════════════ */
-        .confetti {
-            position: fixed;
-            width: 12px;
-            height: 12px;
-            z-index: 999;
-            pointer-events: none;
-            opacity: 0;
-        }
-
-        @keyframes confettiFall {
-            0% {
-                transform: translateY(-100vh) rotate(0deg);
-                opacity: 1;
-            }
-            100% {
-                transform: translateY(100vh) rotate(720deg);
-                opacity: 0;
-            }
-        }
-
-        /* ═══════════════════════════════════════════
-           نافذة النتيجة (Modal)
-           ═══════════════════════════════════════════ */
-        .result-modal {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.9);
-            display: none;
-            align-items: center;
-            justify-content: center;
-            z-index: 1000;
-            padding: 20px;
-            backdrop-filter: blur(10px);
-        }
-
-        .result-modal.show {
-            display: flex;
-            animation: fadeIn 0.3s ease;
-        }
-
-        .result-content {
-            background: linear-gradient(135deg, #2a2a4e, #1a1a2e);
-            border: 3px solid #ffd700;
-            border-radius: 25px;
-            padding: 35px 30px;
-            text-align: center;
-            max-width: 380px;
-            width: 100%;
-            box-shadow: 
-                0 0 60px rgba(255, 215, 0, 0.8),
-                inset 0 0 20px rgba(255, 215, 0, 0.2);
-            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
-        }
-
-        @keyframes popIn {
-            from { transform: scale(0.3) rotate(-10deg); opacity: 0; }
-            to { transform: scale(1) rotate(0deg); opacity: 1; }
-        }
-
-        .result-emoji {
-            font-size: 80px;
-            margin-bottom: 15px;
-            display: block;
-            animation: emojiBounce 1s infinite;
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
-        }
-
-        @keyframes emojiBounce {
-            0%, 100% { transform: translateY(0) scale(1); }
-            50% { transform: translateY(-10px) scale(1.1); }
-        }
-
-        .result-title {
-            font-size: 28px;
-            margin-bottom: 15px;
-            font-weight: 900;
+        .result-title { font-size: 28px; margin-bottom: 15px; font-weight: 900;
             background: linear-gradient(45deg, #ffd700, #ff8c00);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
-        }
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+            filter: drop-shadow(0 0 10px rgba(255,215,0,0.5)); }
 
-        .result-message {
-            font-size: 16px;
-            color: #e0e0ff;
-            margin-bottom: 25px;
-            line-height: 1.7;
-        }
+        .result-message { font-size: 16px; color: #e0e0ff; margin-bottom: 25px; line-height: 1.7; }
+        .result-amount { display: block; font-size: 32px; font-weight: 900; color: #ffd700;
+            margin: 15px 0; text-shadow: 0 0 20px rgba(255,215,0,1); animation: amountPulse 1s infinite; }
+        @keyframes amountPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
 
-        .result-amount {
-            display: block;
-            font-size: 32px;
-            font-weight: 900;
-            color: #ffd700;
-            margin: 15px 0;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 1);
-            animation: amountPulse 1s infinite;
-        }
+        .result-close { padding: 14px 45px; font-size: 17px; font-weight: bold; color: #fff;
+            background: linear-gradient(45deg, #4caf50, #2e7d32); border: none; border-radius: 30px;
+            cursor: pointer; transition: transform 0.2s; box-shadow: 0 5px 20px rgba(76,175,80,0.5); }
+        .result-close:active { transform: scale(0.95); }
 
-        @keyframes amountPulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.1); }
-        }
-
-        .result-close {
-            padding: 14px 45px;
-            font-size: 17px;
-            font-weight: bold;
-            color: #fff;
-            background: linear-gradient(45deg, #4caf50, #2e7d32);
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            transition: transform 0.2s;
-            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.5);
-        }
-
-        .result-close:active {
-            transform: scale(0.95);
-        }
-
-        /* ═══════════════════════════════════════════
-           شاشة الاهتزاز عند الدوران
-           ═══════════════════════════════════════════ */
-        .spinning-screen {
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
+        .spinning-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: radial-gradient(circle, rgba(255,140,0,0.1) 0%, transparent 60%);
-            pointer-events: none;
-            z-index: 99;
-            animation: screenPulse 0.3s infinite;
-            display: none;
-        }
+            pointer-events: none; z-index: 99; animation: screenPulse 0.3s infinite; display: none; }
+        .spinning .spinning-screen { display: block; }
+        @keyframes screenPulse { 0%,100%{opacity:.3} 50%{opacity:.8} }
 
-        .spinning .spinning-screen {
-            display: block;
-        }
+        .loading-dots::after { content: ''; animation: dots 1.5s steps(4, end) infinite; }
+        @keyframes dots { 0%,20%{content:''} 40%{content:'.'} 60%{content:'..'} 80%,100%{content:'...'} }
 
-        @keyframes screenPulse {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.8; }
-        }
-
-        /* ═══════════════════════════════════════════
-           Loading Dots
-           ═══════════════════════════════════════════ */
-        .loading-dots::after {
-            content: '';
-            animation: dots 1.5s steps(4, end) infinite;
-        }
-
-        @keyframes dots {
-            0%, 20% { content: ''; }
-            40% { content: '.'; }
-            60% { content: '..'; }
-            80%, 100% { content: '...'; }
-        }
-
-        /* ═══════════════════════════════════════════
-           Responsive
-           ═══════════════════════════════════════════ */
         @media (max-width: 400px) {
             .wheel-wrapper { width: 300px; height: 300px; }
             .header h1 { font-size: 24px; }
@@ -538,15 +166,12 @@
 </head>
 <body>
 
-    <!-- خلفية النجوم -->
     <div class="stars" id="stars"></div>
 
-    <!-- كرات متوهجة -->
     <div class="glow-orb" style="top: 10%; left: 5%; animation-delay: 0s;"></div>
     <div class="glow-orb" style="top: 60%; right: 5%; animation-delay: 2s;"></div>
     <div class="glow-orb" style="bottom: 10%; left: 40%; animation-delay: 4s;"></div>
 
-    <!-- شاشة توهج أثناء الدوران -->
     <div class="spinning-screen"></div>
 
     <div class="container">
@@ -569,7 +194,6 @@
         <div class="status" id="status">جارٍ الاتصال بتيليجرام<span class="loading-dots"></span></div>
     </div>
 
-    <!-- نافذة النتيجة -->
     <div class="result-modal" id="resultModal">
         <div class="result-content">
             <span class="result-emoji" id="resultEmoji">🎉</span>
@@ -596,7 +220,6 @@
         let isSpinning = false;
         let currentRotation = 0;
         let audioCtx = null;
-        let spinSound = null;
 
         const wheelEl = document.getElementById('wheel');
         const wheelWrapper = document.getElementById('wheelWrapper');
@@ -610,7 +233,7 @@
         const resultClose = document.getElementById('resultClose');
 
         // ═══════════════════════════════════════════
-        // 1. إنشاء نجوم الخلفية
+        // 1. نجوم الخلفية
         // ═══════════════════════════════════════════
         function createStars() {
             const starsContainer = document.getElementById('stars');
@@ -629,23 +252,19 @@
         }
 
         // ═══════════════════════════════════════════
-        // 2. نظام الصوت (Web Audio API)
+        // 2. نظام الصوت
         // ═══════════════════════════════════════════
         function initAudio() {
             try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-            } catch (e) {
-                console.log('Web Audio غير مدعوم:', e);
-            }
+            } catch (e) { console.log('Web Audio غير مدعوم:', e); }
         }
 
-        // صوت "تك" عند دوران العجلة
         function playTick() {
             if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            osc.connect(gain); gain.connect(audioCtx.destination);
             osc.type = 'square';
             osc.frequency.value = 800 + Math.random() * 400;
             gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
@@ -654,80 +273,65 @@
             osc.stop(audioCtx.currentTime + 0.05);
         }
 
-        // صوت الفوز (نغمة صاعدة احتفالية)
         function playWinSound() {
             if (!audioCtx) return;
-            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+            const notes = [523.25, 659.25, 783.99, 1046.50];
             notes.forEach((freq, i) => {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
+                osc.connect(gain); gain.connect(audioCtx.destination);
                 osc.type = 'sine';
                 osc.frequency.value = freq;
                 const startTime = audioCtx.currentTime + (i * 0.15);
                 gain.gain.setValueAtTime(0, startTime);
                 gain.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
                 gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
-                osc.start(startTime);
-                osc.stop(startTime + 0.4);
+                osc.start(startTime); osc.stop(startTime + 0.4);
             });
         }
 
-        // صوت الخسارة (نغمة هابطة)
         function playLoseSound() {
             if (!audioCtx) return;
             const notes = [400, 350, 300, 250];
             notes.forEach((freq, i) => {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
-                osc.connect(gain);
-                gain.connect(audioCtx.destination);
+                osc.connect(gain); gain.connect(audioCtx.destination);
                 osc.type = 'sawtooth';
                 osc.frequency.value = freq;
                 const startTime = audioCtx.currentTime + (i * 0.1);
                 gain.gain.setValueAtTime(0.1, startTime);
                 gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
-                osc.start(startTime);
-                osc.stop(startTime + 0.2);
+                osc.start(startTime); osc.stop(startTime + 0.2);
             });
         }
 
-        // صوت الريسبن
         function playRespinSound() {
             if (!audioCtx) return;
             const osc = audioCtx.createOscillator();
             const gain = audioCtx.createGain();
-            osc.connect(gain);
-            gain.connect(audioCtx.destination);
+            osc.connect(gain); gain.connect(audioCtx.destination);
             osc.type = 'triangle';
             osc.frequency.setValueAtTime(600, audioCtx.currentTime);
             osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
             gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
             gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.start();
-            osc.stop(audioCtx.currentTime + 0.3);
+            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
         }
 
-        // اهتزاز الهاتف
         function vibrate(pattern) {
             if (tg && tg.HapticFeedback) {
-                try {
-                    tg.HapticFeedback.impactOccurred('medium');
-                } catch(e) {}
+                try { tg.HapticFeedback.impactOccurred('medium'); } catch(e) {}
             }
-            if (navigator.vibrate) {
-                navigator.vibrate(pattern);
-            }
+            if (navigator.vibrate) navigator.vibrate(pattern);
         }
 
         // ═══════════════════════════════════════════
-        // 3. بناء العجلة بصريًا
+        // 3. بناء العجلة
         // ═══════════════════════════════════════════
         function buildWheel() {
             const segmentAngle = 360 / PRIZES.length;
             wheelEl.innerHTML = '';
-
             PRIZES.forEach((prize, index) => {
                 const segment = document.createElement('div');
                 segment.className = 'wheel-segment';
@@ -739,7 +343,6 @@
             });
         }
 
-        // تفتيح/تعتيم لون
         function shadeColor(color, percent) {
             const num = parseInt(color.replace('#', ''), 16);
             const amt = Math.round(2.55 * percent);
@@ -749,16 +352,13 @@
             return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
         }
 
-        // ═══════════════════════════════════════════
-        // 4. عرض الحالة
-        // ═══════════════════════════════════════════
         function setStatus(text, type = '') {
             statusEl.textContent = text;
             statusEl.className = 'status ' + type;
         }
 
         // ═══════════════════════════════════════════
-        // 5. قصاصات الاحتفال
+        // 4. قصاصات احتفال
         // ═══════════════════════════════════════════
         function spawnConfetti(count = 60) {
             const colors = ['#ffd700', '#ff3b3b', '#4caf50', '#2196f3', '#e91e63', '#9c27b0', '#ff9800'];
@@ -778,30 +378,24 @@
         }
 
         // ═══════════════════════════════════════════
-        // 6. تدوير العجلة إلى زاوية معينة
+        // 5. تدوير العجلة إلى index محدد
         // ═══════════════════════════════════════════
         function rotateToIndex(prizeIndex, callback) {
             const segmentAngle = 360 / PRIZES.length;
             const targetAngle = (prizeIndex * segmentAngle) + (segmentAngle / 2);
-            const extraSpins = 6 + Math.floor(Math.random() * 4); // 6-9 دورات كاملة
+            const extraSpins = 6 + Math.floor(Math.random() * 4);
             const finalRotation = currentRotation + (extraSpins * 360) + (360 - targetAngle);
 
             wheelEl.classList.add('spin');
             wheelEl.style.transform = `rotate(${finalRotation}deg)`;
             currentRotation = finalRotation;
 
-            // تشغيل أصوات "تك" أثناء الدوران
             let tickCount = 0;
             const tickInterval = setInterval(() => {
-                if (tickCount < 40) {
-                    playTick();
-                    tickCount++;
-                } else {
-                    clearInterval(tickInterval);
-                }
+                if (tickCount < 40) { playTick(); tickCount++; }
+                else clearInterval(tickInterval);
             }, 80);
 
-            // بعد انتهاء الدوران
             setTimeout(() => {
                 clearInterval(tickInterval);
                 wheelEl.classList.remove('spin');
@@ -810,11 +404,10 @@
         }
 
         // ═══════════════════════════════════════════
-        // 7. عرض نافذة النتيجة
+        // 6. عرض نافذة النتيجة
         // ═══════════════════════════════════════════
         function showResult(prize) {
             resultModal.classList.add('show');
-
             if (prize.type === 'win') {
                 resultEmoji.textContent = '🎉';
                 resultTitle.textContent = 'مبروك!';
@@ -841,7 +434,7 @@
         }
 
         // ═══════════════════════════════════════════
-        // 8. معالج زر الدوران
+        // 7. handleSpin — إرسال الطلب وانتظار البوت
         // ═══════════════════════════════════════════
         function handleSpin() {
             if (isSpinning) return;
@@ -853,43 +446,102 @@
             isSpinning = true;
             spinBtn.disabled = true;
             wheelWrapper.classList.add('spinning');
-            setStatus('🎲 العجلة تدور...');
+            setStatus('⏳ جاري اختيار الجائزة من البوت...');
 
-            // تفعيل الصوت (يجب أن يكون بعد تفاعل المستخدم)
             if (!audioCtx) initAudio();
 
-            // ✅ نختار جائزة عشوائية في الواجهة فقط للعرض البصري
-            // ⚠️ الجائزة الحقيقية يحددها البوت (في mainbot.py)
-            const randomIndex = Math.floor(Math.random() * PRIZES.length);
-            const visualPrize = PRIZES[randomIndex];
+            // ✅ نرسل الطلب فقط — لا ندور العجلة بعد
+            // البوت سيختار الجائزة ويرسلها عبر answerWebAppQuery
+            try {
+                tg.sendData(JSON.stringify({
+                    action: 'request_spin',
+                    ts: Date.now()
+                }));
+                console.log('[SPIN] ✅ sendData sent, waiting for answer from bot...');
+                setStatus('⏳ في انتظار البوت...');
+            } catch (err) {
+                console.error('[SPIN] sendData error:', err);
+                setStatus('❌ حدث خطأ في الإرسال', 'error');
+                isSpinning = false;
+                spinBtn.disabled = false;
+                wheelWrapper.classList.remove('spinning');
+            }
+        }
 
-            // 1. تدوير العجلة
-            rotateToIndex(randomIndex, () => {
-                // 2. بعد انتهاء الدوران، عرض النتيجة
-                showResult(visualPrize);
+        // ═══════════════════════════════════════════
+        // 8. handleAnswerFromBot — استقبال نتيجة البوت
+        // ═══════════════════════════════════════════
+        function handleAnswerFromBot(data) {
+            console.log('═══════════════════════════════════');
+            console.log('[ANSWER] وصلت نتيجة من البوت!');
+            console.log('[ANSWER] data:', data);
+            console.log('═══════════════════════════════════');
 
-                // 3. إرسال sendData للبوت (يُغلق WebApp)
-                // نؤخر الإرسال قليلاً حتى يرى المستخدم النتيجة
-                setTimeout(() => {
-                    try {
-                        tg.sendData(JSON.stringify({
-                            action: 'request_spin',
-                            visual_prize: visualPrize.name, // اختياري للتشخيص
-                            ts: Date.now()
-                        }));
-                        // sendData يُغلق WebApp تلقائياً
-                    } catch (err) {
-                        console.error('sendData error:', err);
-                        setStatus('❌ حدث خطأ في الإرسال', 'error');
-                        isSpinning = false;
-                        spinBtn.disabled = false;
+            let prizeTitle = '';
+
+            try {
+                const result = data.result || data;
+                if (result && result.title) {
+                    prizeTitle = result.title;
+                    console.log('[ANSWER] prizeTitle:', prizeTitle);
+                }
+            } catch (e) {
+                console.error('[ANSWER] Parse error:', e);
+            }
+
+            if (!prizeTitle) {
+                console.error('[ANSWER] ❌ لا يوجد title في الرد');
+                setStatus('❌ حدث خطأ في استقبال النتيجة', 'error');
+                isSpinning = false;
+                spinBtn.disabled = false;
+                wheelWrapper.classList.remove('spinning');
+                return;
+            }
+
+            // حالة "عاود غداً"
+            if (prizeTitle.includes('عاود')) {
+                setStatus('⏰ عاود غداً!', 'error');
+                isSpinning = false;
+                spinBtn.disabled = false;
+                wheelWrapper.classList.remove('spinning');
+                return;
+            }
+
+            // إيجاد الجائزة المطابقة في PRIZES
+            const foundIndex = PRIZES.findIndex(p => p.name === prizeTitle);
+
+            if (foundIndex !== -1) {
+                console.log(`[ANSWER] ✅ وجدت الجائزة index=${foundIndex}: ${PRIZES[foundIndex].name}`);
+                const prize = PRIZES[foundIndex];
+
+                rotateToIndex(foundIndex, () => {
+                    wheelWrapper.classList.remove('spinning');
+                    showResult(prize);
+                    isSpinning = false;
+                    setStatus('✅ تم! راجع البوت للتأكيد', 'success');
+                });
+            } else {
+                console.error(`[ANSWER] ❌ لم أجد الجائزة "${prizeTitle}" في PRIZES`);
+                let fallbackIndex = -1;
+                if (prizeTitle.includes('هارد')) fallbackIndex = 0;
+                else if (prizeTitle.includes('ريسبن')) fallbackIndex = 1;
+                else if (prizeTitle.includes('ليرة') || prizeTitle.includes('10000')) fallbackIndex = 2;
+
+                if (fallbackIndex !== -1) {
+                    console.log(`[ANSWER] ✅ fallback match index=${fallbackIndex}`);
+                    const prize = PRIZES[fallbackIndex];
+                    rotateToIndex(fallbackIndex, () => {
                         wheelWrapper.classList.remove('spinning');
-                    }
-                }, 2500); // 2.5 ثانية لعرض النتيجة قبل الإغلاق
-            });
-
-            // إظهار رسالة توضيحية
-            setStatus('✅ ستظهر النتيجة الحقيقية في البوت!', 'success');
+                        showResult(prize);
+                        isSpinning = false;
+                    });
+                } else {
+                    setStatus('❌ جائزة غير معروفة', 'error');
+                    isSpinning = false;
+                    spinBtn.disabled = false;
+                    wheelWrapper.classList.remove('spinning');
+                }
+            }
         }
 
         // ═══════════════════════════════════════════
@@ -903,56 +555,16 @@
         // 10. تهيئة التطبيق
         // ═══════════════════════════════════════════
         function init() {
-            // إنشاء النجوم
             createStars();
-
-            // بناء العجلة
             buildWheel();
 
-            // التحقق من Telegram WebApp
             if (window.Telegram && window.Telegram.WebApp) {
                 tg = window.Telegram.WebApp;
 
                 tg.ready();
                 tg.expand();
 
-                // تعيين ألوان
                 try {
                     tg.setHeaderColor('#0d0d1a');
                     tg.setBackgroundColor('#1a1a2e');
-                } catch (e) {}
-
-                // التحقق من المستخدم
-                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
-                    const user = tg.initDataUnsafe.user;
-                    setStatus(`👋 أهلاً ${user.first_name}! اضغط للدوران`, '');
-                } else {
-                    setStatus('👋 أهلاً! اضغط للدوران', '');
-                }
-
-                spinBtn.disabled = false;
-                spinBtn.textContent = '🎡 ابدأ الدوران';
-
-                // تفعيل الصوت عند أول تفاعل
-                document.addEventListener('click', () => {
-                    if (!audioCtx) initAudio();
-                }, { once: true });
-
-            } else {
-                setStatus('⚠️ افتح العجلة من داخل بوت تيليجرام', 'error');
-                spinBtn.textContent = 'غير متاح';
-                spinBtn.disabled = true;
-            }
-
-            spinBtn.addEventListener('click', handleSpin);
-        }
-
-        // بدء التطبيق
-        if (document.readyState === 'loading') {
-            document.addEventListener('DOMContentLoaded', init);
-        } else {
-            init();
-        }
-    </script>
-</body>
-</html>
+                } catch
