@@ -15,7 +15,7 @@
 
         body {
             font-family: 'Segoe UI', Tahoma, Arial, sans-serif;
-            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            background: radial-gradient(ellipse at center, #1a1a2e 0%, #0d0d1a 100%);
             min-height: 100vh;
             display: flex;
             flex-direction: column;
@@ -23,20 +23,85 @@
             justify-content: center;
             padding: 20px;
             color: #fff;
-            overflow-x: hidden;
+            overflow: hidden;
             user-select: none;
+            position: relative;
+        }
+
+        /* ═══════════════════════════════════════════
+           خلفية متحركة: نجوم + جزيئات متوهجة
+           ═══════════════════════════════════════════ */
+        .stars {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        .star {
+            position: absolute;
+            background: #fff;
+            border-radius: 50%;
+            animation: twinkle 2s infinite ease-in-out;
+        }
+
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+
+        .glow-orb {
+            position: fixed;
+            width: 200px;
+            height: 200px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,215,0,0.15) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+            animation: floatOrb 8s infinite ease-in-out;
+        }
+
+        @keyframes floatOrb {
+            0%, 100% { transform: translate(0, 0); }
+            50% { transform: translate(30px, -30px); }
+        }
+
+        /* ═══════════════════════════════════════════
+           المحتوى الرئيسي
+           ═══════════════════════════════════════════ */
+        .container {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
 
         .header {
             text-align: center;
             margin-bottom: 20px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
         .header h1 {
-            font-size: 26px;
+            font-size: 28px;
             margin-bottom: 8px;
-            text-shadow: 0 0 20px rgba(255, 215, 0, 0.6);
-            color: #ffd700;
+            background: linear-gradient(45deg, #ffd700, #ff8c00, #ffd700);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 200% auto;
+            animation: shineText 3s linear infinite;
+            filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.5));
+        }
+
+        @keyframes shineText {
+            to { background-position: 200% center; }
         }
 
         .header p {
@@ -44,38 +109,90 @@
             color: #a0a0c0;
         }
 
-        .wheel-container {
+        /* ═══════════════════════════════════════════
+           حاوية العجلة + توهج
+           ═══════════════════════════════════════════ */
+        .wheel-wrapper {
             position: relative;
-            width: 320px;
-            height: 320px;
-            margin: 20px 0;
+            width: 340px;
+            height: 340px;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
+        .wheel-glow {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255,215,0,0.4) 0%, transparent 70%);
+            animation: pulseGlow 2s infinite ease-in-out;
+            z-index: 0;
+        }
+
+        @keyframes pulseGlow {
+            0%, 100% { transform: scale(1); opacity: 0.6; }
+            50% { transform: scale(1.15); opacity: 1; }
+        }
+
+        .spinning .wheel-glow {
+            animation: pulseGlow 0.4s infinite ease-in-out;
+            background: radial-gradient(circle, rgba(255,140,0,0.6) 0%, transparent 70%);
+        }
+
+        /* المؤشر (السهم الأحمر) */
         .pointer {
             position: absolute;
-            top: -20px;
+            top: -15px;
             left: 50%;
             transform: translateX(-50%);
             width: 0;
             height: 0;
-            border-left: 20px solid transparent;
-            border-right: 20px solid transparent;
-            border-top: 40px solid #ff3b3b;
+            border-left: 22px solid transparent;
+            border-right: 22px solid transparent;
+            border-top: 45px solid #ff3b3b;
             z-index: 10;
-            filter: drop-shadow(0 0 10px rgba(255, 59, 59, 0.8));
+            filter: drop-shadow(0 0 15px rgba(255, 59, 59, 1))
+                    drop-shadow(0 0 30px rgba(255, 59, 59, 0.6));
+            animation: pointerBounce 1s infinite ease-in-out;
         }
 
+        @keyframes pointerBounce {
+            0%, 100% { transform: translateX(-50%) translateY(0); }
+            50% { transform: translateX(-50%) translateY(-5px); }
+        }
+
+        .spinning .pointer {
+            animation: pointerShake 0.1s infinite linear;
+        }
+
+        @keyframes pointerShake {
+            0%, 100% { transform: translateX(-50%) rotate(0deg); }
+            25% { transform: translateX(-50%) rotate(-5deg); }
+            75% { transform: translateX(-50%) rotate(5deg); }
+        }
+
+        /* الإطار الذهبي */
         .wheel-outer {
             width: 100%;
             height: 100%;
             border-radius: 50%;
-            background: linear-gradient(45deg, #ffd700, #ff8c00, #ffd700);
-            padding: 10px;
+            background: conic-gradient(from 0deg, #ffd700, #ff8c00, #ffd700, #ff8c00, #ffd700);
+            padding: 12px;
             box-shadow: 
-                0 0 40px rgba(255, 215, 0, 0.6),
-                0 0 80px rgba(255, 140, 0, 0.4),
-                inset 0 0 20px rgba(0, 0, 0, 0.3);
+                0 0 50px rgba(255, 215, 0, 0.7),
+                0 0 100px rgba(255, 140, 0, 0.5),
+                0 0 150px rgba(255, 215, 0, 0.3),
+                inset 0 0 30px rgba(0, 0, 0, 0.5);
             position: relative;
+            z-index: 2;
+            animation: rotateBorder 8s linear infinite;
+        }
+
+        @keyframes rotateBorder {
+            to { transform: rotate(360deg); }
         }
 
         .wheel {
@@ -83,10 +200,16 @@
             height: 100%;
             border-radius: 50%;
             position: relative;
-            transition: transform 5s cubic-bezier(0.17, 0.67, 0.12, 0.99);
             overflow: hidden;
+            background: #1a1a2e;
         }
 
+        /* دوران العجلة */
+        .wheel.spin {
+            transition: transform 4.5s cubic-bezier(0.15, 0.9, 0.15, 1);
+        }
+
+        /* القطاعات */
         .wheel-segment {
             position: absolute;
             width: 50%;
@@ -97,58 +220,113 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            padding-left: 20%;
-            font-size: 11px;
-            font-weight: bold;
-            color: #1a1a2e;
-            text-shadow: 0 1px 2px rgba(255, 255, 255, 0.5);
-            border: 1px solid rgba(255, 255, 255, 0.3);
-            overflow: hidden;
+            padding-left: 18%;
+            padding-right: 8%;
+            font-size: 12px;
+            font-weight: 900;
             text-align: center;
             line-height: 1.2;
-            padding-right: 10px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            overflow: hidden;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
         }
 
+        /* المركز */
         .wheel-center {
             position: absolute;
             top: 50%;
             left: 50%;
             transform: translate(-50%, -50%);
-            width: 80px;
-            height: 80px;
+            width: 75px;
+            height: 75px;
             border-radius: 50%;
-            background: radial-gradient(circle, #ffd700, #ff8c00);
+            background: radial-gradient(circle at 30% 30%, #ffe066, #ffd700, #ff8c00);
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 32px;
+            font-size: 34px;
             box-shadow: 
-                0 0 20px rgba(255, 215, 0, 0.8),
-                inset 0 0 10px rgba(0, 0, 0, 0.3);
+                0 0 25px rgba(255, 215, 0, 1),
+                0 0 50px rgba(255, 140, 0, 0.8),
+                inset 0 0 15px rgba(255, 255, 255, 0.5),
+                inset 0 -5px 15px rgba(0, 0, 0, 0.3);
             z-index: 5;
             border: 4px solid #fff;
+            animation: centerPulse 1.5s infinite ease-in-out;
         }
 
+        @keyframes centerPulse {
+            0%, 100% { transform: translate(-50%, -50%) scale(1); }
+            50% { transform: translate(-50%, -50%) scale(1.08); }
+        }
+
+        .spinning .wheel-center {
+            animation: centerSpin 0.2s infinite linear;
+        }
+
+        @keyframes centerSpin {
+            0%, 100% { transform: translate(-50%, -50%) rotate(-5deg) scale(1.1); }
+            50% { transform: translate(-50%, -50%) rotate(5deg) scale(1.1); }
+        }
+
+        /* ═══════════════════════════════════════════
+           زر الدوران
+           ═══════════════════════════════════════════ */
         .spin-btn {
-            margin-top: 20px;
-            padding: 18px 60px;
-            font-size: 20px;
-            font-weight: bold;
+            margin-top: 25px;
+            padding: 20px 65px;
+            font-size: 22px;
+            font-weight: 900;
             color: #fff;
-            background: linear-gradient(45deg, #ff3b3b, #ff8c00);
+            background: linear-gradient(45deg, #ff3b3b, #ff8c00, #ffd700, #ff8c00, #ff3b3b);
+            background-size: 300% 100%;
             border: none;
-            border-radius: 50px;
+            border-radius: 60px;
             cursor: pointer;
             box-shadow: 
-                0 8px 25px rgba(255, 59, 59, 0.5),
-                0 0 30px rgba(255, 140, 0, 0.3);
+                0 10px 30px rgba(255, 59, 59, 0.6),
+                0 0 40px rgba(255, 140, 0, 0.4),
+                inset 0 -4px 15px rgba(0, 0, 0, 0.3);
             transition: all 0.3s ease;
             text-transform: uppercase;
-            letter-spacing: 1px;
+            letter-spacing: 2px;
+            position: relative;
+            overflow: hidden;
+            animation: btnShine 3s infinite linear;
+            z-index: 10;
         }
 
-        .spin-btn:active {
+        @keyframes btnShine {
+            0% { background-position: 0% center; }
+            100% { background-position: 300% center; }
+        }
+
+        .spin-btn::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.4) 50%, transparent 70%);
+            transform: rotate(45deg);
+            animation: btnShimmer 2s infinite;
+        }
+
+        @keyframes btnShimmer {
+            0% { transform: translateX(-100%) rotate(45deg); }
+            100% { transform: translateX(100%) rotate(45deg); }
+        }
+
+        .spin-btn:not(:disabled):active {
             transform: scale(0.95);
+        }
+
+        .spin-btn:not(:disabled):hover {
+            transform: translateY(-4px);
+            box-shadow: 
+                0 15px 40px rgba(255, 59, 59, 0.8),
+                0 0 60px rgba(255, 140, 0, 0.6);
         }
 
         .spin-btn:disabled {
@@ -156,55 +334,71 @@
             cursor: not-allowed;
             box-shadow: none;
             opacity: 0.6;
+            animation: none;
         }
 
-        .spin-btn:not(:disabled):hover {
-            transform: translateY(-3px);
-            box-shadow: 
-                0 12px 30px rgba(255, 59, 59, 0.7),
-                0 0 40px rgba(255, 140, 0, 0.5);
+        .spin-btn:disabled::before {
+            display: none;
         }
 
+        /* ═══════════════════════════════════════════
+           حالة + نص
+           ═══════════════════════════════════════════ */
         .status {
             margin-top: 20px;
-            font-size: 16px;
+            font-size: 17px;
             color: #ffd700;
             text-align: center;
-            min-height: 24px;
+            min-height: 26px;
             font-weight: bold;
-            text-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+            text-shadow: 0 0 15px rgba(255, 215, 0, 0.8);
+            animation: fadeIn 0.5s;
         }
 
-        .status.error {
-            color: #ff3b3b;
+        .status.error { color: #ff3b3b; text-shadow: 0 0 15px rgba(255, 59, 59, 0.8); }
+        .status.success { color: #4caf50; text-shadow: 0 0 15px rgba(76, 175, 80, 0.8); }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        .status.success {
-            color: #4caf50;
+        /* ═══════════════════════════════════════════
+           قصاصات الاحتفال (Confetti)
+           ═══════════════════════════════════════════ */
+        .confetti {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            z-index: 999;
+            pointer-events: none;
+            opacity: 0;
         }
 
-        .spinning {
-            animation: spin 0.3s linear infinite;
+        @keyframes confettiFall {
+            0% {
+                transform: translateY(-100vh) rotate(0deg);
+                opacity: 1;
+            }
+            100% {
+                transform: translateY(100vh) rotate(720deg);
+                opacity: 0;
+            }
         }
 
-        @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-
+        /* ═══════════════════════════════════════════
+           نافذة النتيجة (Modal)
+           ═══════════════════════════════════════════ */
         .result-modal {
             position: fixed;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background: rgba(0, 0, 0, 0.85);
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
             display: none;
             align-items: center;
             justify-content: center;
-            z-index: 100;
+            z-index: 1000;
             padding: 20px;
-            backdrop-filter: blur(5px);
+            backdrop-filter: blur(10px);
         }
 
         .result-modal.show {
@@ -212,79 +406,113 @@
             animation: fadeIn 0.3s ease;
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
         .result-content {
             background: linear-gradient(135deg, #2a2a4e, #1a1a2e);
             border: 3px solid #ffd700;
-            border-radius: 20px;
-            padding: 30px;
+            border-radius: 25px;
+            padding: 35px 30px;
             text-align: center;
-            max-width: 350px;
+            max-width: 380px;
             width: 100%;
-            box-shadow: 0 0 50px rgba(255, 215, 0, 0.6);
-            animation: popIn 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            box-shadow: 
+                0 0 60px rgba(255, 215, 0, 0.8),
+                inset 0 0 20px rgba(255, 215, 0, 0.2);
+            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
 
         @keyframes popIn {
-            from { transform: scale(0.5); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
+            from { transform: scale(0.3) rotate(-10deg); opacity: 0; }
+            to { transform: scale(1) rotate(0deg); opacity: 1; }
         }
 
         .result-emoji {
-            font-size: 60px;
+            font-size: 80px;
             margin-bottom: 15px;
             display: block;
+            animation: emojiBounce 1s infinite;
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.8));
+        }
+
+        @keyframes emojiBounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-10px) scale(1.1); }
         }
 
         .result-title {
-            font-size: 24px;
-            color: #ffd700;
+            font-size: 28px;
             margin-bottom: 15px;
-            font-weight: bold;
+            font-weight: 900;
+            background: linear-gradient(45deg, #ffd700, #ff8c00);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            filter: drop-shadow(0 0 10px rgba(255, 215, 0, 0.5));
         }
 
         .result-message {
             font-size: 16px;
             color: #e0e0ff;
-            margin-bottom: 20px;
-            line-height: 1.6;
+            margin-bottom: 25px;
+            line-height: 1.7;
+        }
+
+        .result-amount {
+            display: block;
+            font-size: 32px;
+            font-weight: 900;
+            color: #ffd700;
+            margin: 15px 0;
+            text-shadow: 0 0 20px rgba(255, 215, 0, 1);
+            animation: amountPulse 1s infinite;
+        }
+
+        @keyframes amountPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
         }
 
         .result-close {
-            padding: 12px 40px;
-            font-size: 16px;
+            padding: 14px 45px;
+            font-size: 17px;
             font-weight: bold;
             color: #fff;
             background: linear-gradient(45deg, #4caf50, #2e7d32);
             border: none;
-            border-radius: 25px;
+            border-radius: 30px;
             cursor: pointer;
             transition: transform 0.2s;
+            box-shadow: 0 5px 20px rgba(76, 175, 80, 0.5);
         }
 
         .result-close:active {
             transform: scale(0.95);
         }
 
-        .confetti {
+        /* ═══════════════════════════════════════════
+           شاشة الاهتزاز عند الدوران
+           ═══════════════════════════════════════════ */
+        .spinning-screen {
             position: fixed;
-            width: 10px;
-            height: 10px;
-            background: #ffd700;
-            animation: confettiFall 3s linear infinite;
-            z-index: 99;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: radial-gradient(circle, rgba(255,140,0,0.1) 0%, transparent 60%);
             pointer-events: none;
+            z-index: 99;
+            animation: screenPulse 0.3s infinite;
+            display: none;
         }
 
-        @keyframes confettiFall {
-            0% { transform: translateY(-100vh) rotate(0deg); opacity: 1; }
-            100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+        .spinning .spinning-screen {
+            display: block;
         }
 
+        @keyframes screenPulse {
+            0%, 100% { opacity: 0.3; }
+            50% { opacity: 0.8; }
+        }
+
+        /* ═══════════════════════════════════════════
+           Loading Dots
+           ═══════════════════════════════════════════ */
         .loading-dots::after {
             content: '';
             animation: dots 1.5s steps(4, end) infinite;
@@ -296,26 +524,50 @@
             60% { content: '..'; }
             80%, 100% { content: '...'; }
         }
+
+        /* ═══════════════════════════════════════════
+           Responsive
+           ═══════════════════════════════════════════ */
+        @media (max-width: 400px) {
+            .wheel-wrapper { width: 300px; height: 300px; }
+            .header h1 { font-size: 24px; }
+            .spin-btn { padding: 18px 50px; font-size: 18px; }
+            .wheel-segment { font-size: 11px; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="header">
-        <h1>🎡 عجلة الحظ 🎡</h1>
-        <p>جرب حظك واربح جوائز رائعة!</p>
-    </div>
+    <!-- خلفية النجوم -->
+    <div class="stars" id="stars"></div>
 
-    <div class="wheel-container">
-        <div class="pointer"></div>
-        <div class="wheel-outer">
-            <div class="wheel" id="wheel"></div>
-            <div class="wheel-center">🎰</div>
+    <!-- كرات متوهجة -->
+    <div class="glow-orb" style="top: 10%; left: 5%; animation-delay: 0s;"></div>
+    <div class="glow-orb" style="top: 60%; right: 5%; animation-delay: 2s;"></div>
+    <div class="glow-orb" style="bottom: 10%; left: 40%; animation-delay: 4s;"></div>
+
+    <!-- شاشة توهج أثناء الدوران -->
+    <div class="spinning-screen"></div>
+
+    <div class="container">
+        <div class="header">
+            <h1>🎡 عجلة الحظ 🎡</h1>
+            <p>جرب حظك واربح جوائز رائعة!</p>
         </div>
+
+        <div class="wheel-wrapper" id="wheelWrapper">
+            <div class="wheel-glow"></div>
+            <div class="pointer"></div>
+            <div class="wheel-outer">
+                <div class="wheel" id="wheel"></div>
+                <div class="wheel-center" id="wheelCenter">🎰</div>
+            </div>
+        </div>
+
+        <button class="spin-btn" id="spinBtn" disabled>جاري التحميل...</button>
+
+        <div class="status" id="status">جارٍ الاتصال بتيليجرام<span class="loading-dots"></span></div>
     </div>
-
-    <button class="spin-btn" id="spinBtn" disabled>جاري التحميل...</button>
-
-    <div class="status" id="status">جارٍ الاتصال بتيليجرام<span class="loading-dots"></span></div>
 
     <!-- نافذة النتيجة -->
     <div class="result-modal" id="resultModal">
@@ -328,23 +580,27 @@
     </div>
 
     <script>
-        // ============================================
+        // ═══════════════════════════════════════════
         // ثوابت العجلة — يجب أن تطابق WHEEL_PRIZES في mainbot.py
-        // ============================================
+        // ═══════════════════════════════════════════
         const PRIZES = [
-            { name: 'هارد لوك 😢',  type: 'hard_luck', value: 0,     color: '#ff6b6b', textColor: '#fff' },
-            { name: 'ريسبن 🔄',      type: 'respin',    value: 0,     color: '#4ecdc4', textColor: '#1a1a2e' },
-            { name: '10000 ليرة 💰', type: 'win',       value: 10000, color: '#ffd700', textColor: '#1a1a2e' },
+            { name: 'هارد لوك 😢',  type: 'hard_luck', value: 0,     color: '#2c3e50', textColor: '#fff' },
+            { name: 'ريسبن 🔄',      type: 'respin',    value: 0,     color: '#16a085', textColor: '#fff' },
+            { name: '10000 ليرة 💰', type: 'win',       value: 10000, color: '#f39c12', textColor: '#fff' },
         ];
 
-        // ============================================
+        // ═══════════════════════════════════════════
         // متغيرات الحالة
-        // ============================================
+        // ═══════════════════════════════════════════
         let tg = null;
         let isSpinning = false;
         let currentRotation = 0;
+        let audioCtx = null;
+        let spinSound = null;
 
         const wheelEl = document.getElementById('wheel');
+        const wheelWrapper = document.getElementById('wheelWrapper');
+        const wheelCenter = document.getElementById('wheelCenter');
         const spinBtn = document.getElementById('spinBtn');
         const statusEl = document.getElementById('status');
         const resultModal = document.getElementById('resultModal');
@@ -353,9 +609,121 @@
         const resultMessage = document.getElementById('resultMessage');
         const resultClose = document.getElementById('resultClose');
 
-        // ============================================
-        // بناء العجلة بصريًا
-        // ============================================
+        // ═══════════════════════════════════════════
+        // 1. إنشاء نجوم الخلفية
+        // ═══════════════════════════════════════════
+        function createStars() {
+            const starsContainer = document.getElementById('stars');
+            for (let i = 0; i < 80; i++) {
+                const star = document.createElement('div');
+                star.className = 'star';
+                const size = Math.random() * 2 + 1;
+                star.style.width = size + 'px';
+                star.style.height = size + 'px';
+                star.style.left = Math.random() * 100 + 'vw';
+                star.style.top = Math.random() * 100 + 'vh';
+                star.style.animationDelay = Math.random() * 2 + 's';
+                star.style.animationDuration = (Math.random() * 2 + 1.5) + 's';
+                starsContainer.appendChild(star);
+            }
+        }
+
+        // ═══════════════════════════════════════════
+        // 2. نظام الصوت (Web Audio API)
+        // ═══════════════════════════════════════════
+        function initAudio() {
+            try {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            } catch (e) {
+                console.log('Web Audio غير مدعوم:', e);
+            }
+        }
+
+        // صوت "تك" عند دوران العجلة
+        function playTick() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'square';
+            osc.frequency.value = 800 + Math.random() * 400;
+            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+            osc.start(audioCtx.currentTime);
+            osc.stop(audioCtx.currentTime + 0.05);
+        }
+
+        // صوت الفوز (نغمة صاعدة احتفالية)
+        function playWinSound() {
+            if (!audioCtx) return;
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.value = freq;
+                const startTime = audioCtx.currentTime + (i * 0.15);
+                gain.gain.setValueAtTime(0, startTime);
+                gain.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
+                osc.start(startTime);
+                osc.stop(startTime + 0.4);
+            });
+        }
+
+        // صوت الخسارة (نغمة هابطة)
+        function playLoseSound() {
+            if (!audioCtx) return;
+            const notes = [400, 350, 300, 250];
+            notes.forEach((freq, i) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sawtooth';
+                osc.frequency.value = freq;
+                const startTime = audioCtx.currentTime + (i * 0.1);
+                gain.gain.setValueAtTime(0.1, startTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
+                osc.start(startTime);
+                osc.stop(startTime + 0.2);
+            });
+        }
+
+        // صوت الريسبن
+        function playRespinSound() {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain);
+            gain.connect(audioCtx.destination);
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
+            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
+            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
+            osc.start();
+            osc.stop(audioCtx.currentTime + 0.3);
+        }
+
+        // اهتزاز الهاتف
+        function vibrate(pattern) {
+            if (tg && tg.HapticFeedback) {
+                try {
+                    tg.HapticFeedback.impactOccurred('medium');
+                } catch(e) {}
+            }
+            if (navigator.vibrate) {
+                navigator.vibrate(pattern);
+            }
+        }
+
+        // ═══════════════════════════════════════════
+        // 3. بناء العجلة بصريًا
+        // ═══════════════════════════════════════════
         function buildWheel() {
             const segmentAngle = 360 / PRIZES.length;
             wheelEl.innerHTML = '';
@@ -363,7 +731,7 @@
             PRIZES.forEach((prize, index) => {
                 const segment = document.createElement('div');
                 segment.className = 'wheel-segment';
-                segment.style.background = prize.color;
+                segment.style.background = `linear-gradient(135deg, ${prize.color}, ${shadeColor(prize.color, -20)})`;
                 segment.style.color = prize.textColor;
                 segment.style.transform = `rotate(${index * segmentAngle}deg) skewY(${90 - segmentAngle}deg)`;
                 segment.textContent = prize.name;
@@ -371,71 +739,110 @@
             });
         }
 
-        // ============================================
-        // عرض حالة
-        // ============================================
+        // تفتيح/تعتيم لون
+        function shadeColor(color, percent) {
+            const num = parseInt(color.replace('#', ''), 16);
+            const amt = Math.round(2.55 * percent);
+            const R = Math.max(0, Math.min(255, (num >> 16) + amt));
+            const G = Math.max(0, Math.min(255, (num >> 8 & 0x00FF) + amt));
+            const B = Math.max(0, Math.min(255, (num & 0x0000FF) + amt));
+            return '#' + (0x1000000 + R * 0x10000 + G * 0x100 + B).toString(16).slice(1);
+        }
+
+        // ═══════════════════════════════════════════
+        // 4. عرض الحالة
+        // ═══════════════════════════════════════════
         function setStatus(text, type = '') {
             statusEl.textContent = text;
             statusEl.className = 'status ' + type;
         }
 
-        // ============================================
-        // عرض النتيجة في نافذة
-        // ============================================
+        // ═══════════════════════════════════════════
+        // 5. قصاصات الاحتفال
+        // ═══════════════════════════════════════════
+        function spawnConfetti(count = 60) {
+            const colors = ['#ffd700', '#ff3b3b', '#4caf50', '#2196f3', '#e91e63', '#9c27b0', '#ff9800'];
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.className = 'confetti';
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+                confetti.style.width = (Math.random() * 8 + 6) + 'px';
+                confetti.style.height = (Math.random() * 8 + 6) + 'px';
+                confetti.style.animation = `confettiFall ${2 + Math.random() * 2}s linear forwards`;
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                document.body.appendChild(confetti);
+                setTimeout(() => confetti.remove(), 5000);
+            }
+        }
+
+        // ═══════════════════════════════════════════
+        // 6. تدوير العجلة إلى زاوية معينة
+        // ═══════════════════════════════════════════
+        function rotateToIndex(prizeIndex, callback) {
+            const segmentAngle = 360 / PRIZES.length;
+            const targetAngle = (prizeIndex * segmentAngle) + (segmentAngle / 2);
+            const extraSpins = 6 + Math.floor(Math.random() * 4); // 6-9 دورات كاملة
+            const finalRotation = currentRotation + (extraSpins * 360) + (360 - targetAngle);
+
+            wheelEl.classList.add('spin');
+            wheelEl.style.transform = `rotate(${finalRotation}deg)`;
+            currentRotation = finalRotation;
+
+            // تشغيل أصوات "تك" أثناء الدوران
+            let tickCount = 0;
+            const tickInterval = setInterval(() => {
+                if (tickCount < 40) {
+                    playTick();
+                    tickCount++;
+                } else {
+                    clearInterval(tickInterval);
+                }
+            }, 80);
+
+            // بعد انتهاء الدوران
+            setTimeout(() => {
+                clearInterval(tickInterval);
+                wheelEl.classList.remove('spin');
+                if (callback) callback();
+            }, 4600);
+        }
+
+        // ═══════════════════════════════════════════
+        // 7. عرض نافذة النتيجة
+        // ═══════════════════════════════════════════
         function showResult(prize) {
             resultModal.classList.add('show');
 
             if (prize.type === 'win') {
                 resultEmoji.textContent = '🎉';
                 resultTitle.textContent = 'مبروك!';
-                resultMessage.innerHTML = `ربحت <b style="color:#ffd700">${prize.name}</b><br>`;
-                spawnConfetti();
+                resultMessage.innerHTML = `
+                    لقد ربحت جائزة رائعة!
+                    <span class="result-amount">💰 ${prize.value.toLocaleString()} ل.س</span>
+                `;
+                spawnConfetti(100);
+                playWinSound();
+                vibrate([100, 50, 100, 50, 200]);
             } else if (prize.type === 'respin') {
                 resultEmoji.textContent = '🔄';
                 resultTitle.textContent = 'حظ سعيد!';
-                resultMessage.innerHTML = `حصلت على <b>${prize.name}</b><br>يمكنك المحاولة مرة أخرى!`;
+                resultMessage.innerHTML = `حصلت على <b>${prize.name}</b><br>سيتم إضافة النتيجة في البوت!`;
+                playRespinSound();
+                vibrate([50, 30, 50]);
             } else {
                 resultEmoji.textContent = '😢';
                 resultTitle.textContent = 'حظ أوفر!';
                 resultMessage.innerHTML = `حصلت على <b>${prize.name}</b><br>جرب حظك غداً!`;
+                playLoseSound();
+                vibrate(100);
             }
         }
 
-        // ============================================
-        // قصاصات الاحتفال
-        // ============================================
-        function spawnConfetti() {
-            const colors = ['#ffd700', '#ff3b3b', '#4caf50', '#2196f3', '#e91e63'];
-            for (let i = 0; i < 50; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.animationDelay = Math.random() * 2 + 's';
-                confetti.style.animationDuration = (2 + Math.random() * 2) + 's';
-                document.body.appendChild(confetti);
-                setTimeout(() => confetti.remove(), 5000);
-            }
-        }
-
-        // ============================================
-        // تدوير العجلة إلى الجائزة المطلوبة
-        // ============================================
-        function rotateToPrize(prizeIndex) {
-            const segmentAngle = 360 / PRIZES.length;
-            // زاوية الجائزة: منتصف القطاع
-            const targetAngle = (prizeIndex * segmentAngle) + (segmentAngle / 2);
-            // دوران كامل + زاوية الهدف (اتجاه عكس عقارب الساعة ليصعد القطاع للاعلى)
-            const extraSpins = 5 + Math.floor(Math.random() * 3);
-            const finalRotation = currentRotation + (extraSpins * 360) + (360 - targetAngle);
-
-            wheelEl.style.transform = `rotate(${finalRotation}deg)`;
-            currentRotation = finalRotation;
-        }
-
-        // ============================================
-        // معالج زر الدوران
-        // ============================================
+        // ═══════════════════════════════════════════
+        // 8. معالج زر الدوران
+        // ═══════════════════════════════════════════
         function handleSpin() {
             if (isSpinning) return;
             if (!tg) {
@@ -445,95 +852,102 @@
 
             isSpinning = true;
             spinBtn.disabled = true;
-            setStatus('🎲 جاري إرسال طلب الدوران...');
+            wheelWrapper.classList.add('spinning');
+            setStatus('🎲 العجلة تدور...');
 
-            try {
-                // ✅ نرسل فقط action = request_spin — البوت يختار الجائزة
-                tg.sendData(JSON.stringify({
-                    action: 'request_spin'
-                }));
+            // تفعيل الصوت (يجب أن يكون بعد تفاعل المستخدم)
+            if (!audioCtx) initAudio();
 
-                setStatus('✅ تم إرسال طلبك! تفقد رسالة البوت للنتيجة.', 'success');
+            // ✅ نختار جائزة عشوائية في الواجهة فقط للعرض البصري
+            // ⚠️ الجائزة الحقيقية يحددها البوت (في mainbot.py)
+            const randomIndex = Math.floor(Math.random() * PRIZES.length);
+            const visualPrize = PRIZES[randomIndex];
 
-                // إظهار رسالة توضيحية
+            // 1. تدوير العجلة
+            rotateToIndex(randomIndex, () => {
+                // 2. بعد انتهاء الدوران، عرض النتيجة
+                showResult(visualPrize);
+
+                // 3. إرسال sendData للبوت (يُغلق WebApp)
+                // نؤخر الإرسال قليلاً حتى يرى المستخدم النتيجة
                 setTimeout(() => {
-                    resultModal.classList.add('show');
-                    resultEmoji.textContent = '📩';
-                    resultTitle.textContent = 'تم إرسال طلبك';
-                    resultMessage.innerHTML = 'ستظهر نتيجتك في محادثة البوت خلال لحظات.<br>راجع رسائل البوت الآن!';
-                }, 500);
+                    try {
+                        tg.sendData(JSON.stringify({
+                            action: 'request_spin',
+                            visual_prize: visualPrize.name, // اختياري للتشخيص
+                            ts: Date.now()
+                        }));
+                        // sendData يُغلق WebApp تلقائياً
+                    } catch (err) {
+                        console.error('sendData error:', err);
+                        setStatus('❌ حدث خطأ في الإرسال', 'error');
+                        isSpinning = false;
+                        spinBtn.disabled = false;
+                        wheelWrapper.classList.remove('spinning');
+                    }
+                }, 2500); // 2.5 ثانية لعرض النتيجة قبل الإغلاق
+            });
 
-            } catch (err) {
-                console.error('sendData error:', err);
-                setStatus('❌ حدث خطأ، حاول مرة أخرى', 'error');
-                isSpinning = false;
-                spinBtn.disabled = false;
-            }
+            // إظهار رسالة توضيحية
+            setStatus('✅ ستظهر النتيجة الحقيقية في البوت!', 'success');
         }
 
-        // ============================================
-        // إغلاق نافذة النتيجة
-        // ============================================
+        // ═══════════════════════════════════════════
+        // 9. إغلاق نافذة النتيجة
+        // ═══════════════════════════════════════════
         resultClose.addEventListener('click', () => {
             resultModal.classList.remove('show');
-            // إغلاق WebApp بعد إظهار النتيجة
-            if (tg) {
-                setTimeout(() => {
-                    try { tg.close(); } catch (e) {}
-                }, 300);
-            }
         });
 
-        // ============================================
-        // تهيئة التطبيق
-        // ============================================
+        // ═══════════════════════════════════════════
+        // 10. تهيئة التطبيق
+        // ═══════════════════════════════════════════
         function init() {
+            // إنشاء النجوم
+            createStars();
+
+            // بناء العجلة
             buildWheel();
 
-            // التحقق من وجود Telegram WebApp
+            // التحقق من Telegram WebApp
             if (window.Telegram && window.Telegram.WebApp) {
                 tg = window.Telegram.WebApp;
 
-                // تهيئة
                 tg.ready();
                 tg.expand();
 
-                // تعيين ألوان متوافقة
+                // تعيين ألوان
                 try {
-                    tg.setHeaderColor('#1a1a2e');
+                    tg.setHeaderColor('#0d0d1a');
                     tg.setBackgroundColor('#1a1a2e');
-                } catch (e) {
-                    console.log('Theme API not available');
-                }
+                } catch (e) {}
 
-                // التحقق من وجود بيانات المستخدم
+                // التحقق من المستخدم
                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                     const user = tg.initDataUnsafe.user;
                     setStatus(`👋 أهلاً ${user.first_name}! اضغط للدوران`, '');
-                    spinBtn.disabled = false;
-                    spinBtn.textContent = '🎡 ابدأ الدوران';
                 } else {
-                    // قد يكون initDataUnsafe فارغاً في بعض الحالات
                     setStatus('👋 أهلاً! اضغط للدوران', '');
-                    spinBtn.disabled = false;
-                    spinBtn.textContent = '🎡 ابدأ الدوران';
                 }
 
+                spinBtn.disabled = false;
+                spinBtn.textContent = '🎡 ابدأ الدوران';
+
+                // تفعيل الصوت عند أول تفاعل
+                document.addEventListener('click', () => {
+                    if (!audioCtx) initAudio();
+                }, { once: true });
+
             } else {
-                // ليس داخل تيليجرام
                 setStatus('⚠️ افتح العجلة من داخل بوت تيليجرام', 'error');
                 spinBtn.textContent = 'غير متاح';
                 spinBtn.disabled = true;
             }
 
-            // ربط الأحداث
             spinBtn.addEventListener('click', handleSpin);
         }
 
-        // بدء التطبيق عند تحميل الصفحة
-        document.addEventListener('DOMContentLoaded', init);
-
-        // في حال DOM جاهز بالفعل
+        // بدء التطبيق
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', init);
         } else {
