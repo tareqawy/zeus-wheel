@@ -567,4 +567,40 @@
                 try {
                     tg.setHeaderColor('#0d0d1a');
                     tg.setBackgroundColor('#1a1a2e');
-                } catch
+                } catch (e) {}
+
+                // ✅✅✅ استقبال نتيجة البوت
+                tg.onEvent('webAppQueryResult', handleAnswerFromBot);
+                console.log('[INIT] ✅ webAppQueryResult listener registered');
+
+                if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
+                    const user = tg.initDataUnsafe.user;
+                    setStatus(`👋 أهلاً ${user.first_name}! اضغط للدوران`, '');
+                } else {
+                    setStatus('👋 أهلاً! اضغط للدوران', '');
+                }
+
+                spinBtn.disabled = false;
+                spinBtn.textContent = '🎡 ابدأ الدوران';
+
+                document.addEventListener('click', () => {
+                    if (!audioCtx) initAudio();
+                }, { once: true });
+
+            } else {
+                setStatus('⚠️ افتح العجلة من داخل بوت تيليجرام', 'error');
+                spinBtn.textContent = 'غير متاح';
+                spinBtn.disabled = true;
+            }
+
+            spinBtn.addEventListener('click', handleSpin);
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
