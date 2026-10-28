@@ -66,7 +66,12 @@
 
         .wheel { width: 100%; height: 100%; border-radius: 50%; position: relative;
             overflow: hidden; background: #1a1a2e; }
-        .wheel.spin { transition: transform 4.5s cubic-bezier(0.15, 0.9, 0.15, 1); }
+
+        /* ✅ الدوران المستمر (لا يتوقف) */
+        @keyframes continuousSpin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
 
         .wheel-segment { position: absolute; width: 50%; height: 50%; top: 0; left: 50%;
             transform-origin: 0% 100%; display: flex; align-items: center; justify-content: center;
@@ -111,41 +116,6 @@
         .status.error { color: #ff3b3b; text-shadow: 0 0 15px rgba(255,59,59,0.8); }
         .status.success { color: #4caf50; text-shadow: 0 0 15px rgba(76,175,80,0.8); }
         @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-
-        .confetti { position: fixed; width: 12px; height: 12px; z-index: 999;
-            pointer-events: none; opacity: 0; }
-        @keyframes confettiFall { 0%{transform:translateY(-100vh) rotate(0);opacity:1} 100%{transform:translateY(100vh) rotate(720deg);opacity:0} }
-
-        .result-modal { position: fixed; top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0,0,0,0.9); display: none; align-items: center; justify-content: center;
-            z-index: 1000; padding: 20px; backdrop-filter: blur(10px); }
-        .result-modal.show { display: flex; animation: fadeIn 0.3s ease; }
-
-        .result-content { background: linear-gradient(135deg, #2a2a4e, #1a1a2e);
-            border: 3px solid #ffd700; border-radius: 25px; padding: 35px 30px; text-align: center;
-            max-width: 380px; width: 100%;
-            box-shadow: 0 0 60px rgba(255,215,0,0.8), inset 0 0 20px rgba(255,215,0,0.2);
-            animation: popIn 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55); }
-        @keyframes popIn { from{transform:scale(.3) rotate(-10deg);opacity:0} to{transform:scale(1) rotate(0);opacity:1} }
-
-        .result-emoji { font-size: 80px; margin-bottom: 15px; display: block;
-            animation: emojiBounce 1s infinite; filter: drop-shadow(0 0 20px rgba(255,215,0,0.8)); }
-        @keyframes emojiBounce { 0%,100%{transform:translateY(0) scale(1)} 50%{transform:translateY(-10px) scale(1.1)} }
-
-        .result-title { font-size: 28px; margin-bottom: 15px; font-weight: 900;
-            background: linear-gradient(45deg, #ffd700, #ff8c00);
-            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-            filter: drop-shadow(0 0 10px rgba(255,215,0,0.5)); }
-
-        .result-message { font-size: 16px; color: #e0e0ff; margin-bottom: 25px; line-height: 1.7; }
-        .result-amount { display: block; font-size: 32px; font-weight: 900; color: #ffd700;
-            margin: 15px 0; text-shadow: 0 0 20px rgba(255,215,0,1); animation: amountPulse 1s infinite; }
-        @keyframes amountPulse { 0%,100%{transform:scale(1)} 50%{transform:scale(1.1)} }
-
-        .result-close { padding: 14px 45px; font-size: 17px; font-weight: bold; color: #fff;
-            background: linear-gradient(45deg, #4caf50, #2e7d32); border: none; border-radius: 30px;
-            cursor: pointer; transition: transform 0.2s; box-shadow: 0 5px 20px rgba(76,175,80,0.5); }
-        .result-close:active { transform: scale(0.95); }
 
         .spinning-screen { position: fixed; top: 0; left: 0; right: 0; bottom: 0;
             background: radial-gradient(circle, rgba(255,140,0,0.1) 0%, transparent 60%);
@@ -194,47 +164,32 @@
         <div class="status" id="status">جارٍ الاتصال بتيليجرام<span class="loading-dots"></span></div>
     </div>
 
-    <div class="result-modal" id="resultModal">
-        <div class="result-content">
-            <span class="result-emoji" id="resultEmoji">🎉</span>
-            <div class="result-title" id="resultTitle">مبروك!</div>
-            <div class="result-message" id="resultMessage"></div>
-            <button class="result-close" id="resultClose">حسناً</button>
-        </div>
-    </div>
-
     <script>
-        // ═══════════════════════════════════════════
-        // ثوابت العجلة — يجب أن تطابق WHEEL_PRIZES في mainbot.py
-        // ═══════════════════════════════════════════
+        // ============================================
+        // ثوابت العجلة — للعرض البصري فقط
+        // البوت يختار الجائزة الحقيقية
+        // ============================================
         const PRIZES = [
             { name: 'هارد لوك 😢',  type: 'hard_luck', value: 0,     color: '#2c3e50', textColor: '#fff' },
             { name: 'ريسبن 🔄',      type: 'respin',    value: 0,     color: '#16a085', textColor: '#fff' },
             { name: '10000 ليرة 💰', type: 'win',       value: 10000, color: '#f39c12', textColor: '#fff' },
         ];
 
-        // ═══════════════════════════════════════════
+        // ============================================
         // متغيرات الحالة
-        // ═══════════════════════════════════════════
+        // ============================================
         let tg = null;
         let isSpinning = false;
-        let currentRotation = 0;
         let audioCtx = null;
 
         const wheelEl = document.getElementById('wheel');
         const wheelWrapper = document.getElementById('wheelWrapper');
-        const wheelCenter = document.getElementById('wheelCenter');
         const spinBtn = document.getElementById('spinBtn');
         const statusEl = document.getElementById('status');
-        const resultModal = document.getElementById('resultModal');
-        const resultEmoji = document.getElementById('resultEmoji');
-        const resultTitle = document.getElementById('resultTitle');
-        const resultMessage = document.getElementById('resultMessage');
-        const resultClose = document.getElementById('resultClose');
 
-        // ═══════════════════════════════════════════
+        // ============================================
         // 1. نجوم الخلفية
-        // ═══════════════════════════════════════════
+        // ============================================
         function createStars() {
             const starsContainer = document.getElementById('stars');
             for (let i = 0; i < 80; i++) {
@@ -251,9 +206,9 @@
             }
         }
 
-        // ═══════════════════════════════════════════
+        // ============================================
         // 2. نظام الصوت
-        // ═══════════════════════════════════════════
+        // ============================================
         function initAudio() {
             try {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -262,61 +217,17 @@
 
         function playTick() {
             if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'square';
-            osc.frequency.value = 800 + Math.random() * 400;
-            gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
-            osc.start(audioCtx.currentTime);
-            osc.stop(audioCtx.currentTime + 0.05);
-        }
-
-        function playWinSound() {
-            if (!audioCtx) return;
-            const notes = [523.25, 659.25, 783.99, 1046.50];
-            notes.forEach((freq, i) => {
+            try {
                 const osc = audioCtx.createOscillator();
                 const gain = audioCtx.createGain();
                 osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.type = 'sine';
-                osc.frequency.value = freq;
-                const startTime = audioCtx.currentTime + (i * 0.15);
-                gain.gain.setValueAtTime(0, startTime);
-                gain.gain.linearRampToValueAtTime(0.3, startTime + 0.02);
-                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.4);
-                osc.start(startTime); osc.stop(startTime + 0.4);
-            });
-        }
-
-        function playLoseSound() {
-            if (!audioCtx) return;
-            const notes = [400, 350, 300, 250];
-            notes.forEach((freq, i) => {
-                const osc = audioCtx.createOscillator();
-                const gain = audioCtx.createGain();
-                osc.connect(gain); gain.connect(audioCtx.destination);
-                osc.type = 'sawtooth';
-                osc.frequency.value = freq;
-                const startTime = audioCtx.currentTime + (i * 0.1);
-                gain.gain.setValueAtTime(0.1, startTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, startTime + 0.2);
-                osc.start(startTime); osc.stop(startTime + 0.2);
-            });
-        }
-
-        function playRespinSound() {
-            if (!audioCtx) return;
-            const osc = audioCtx.createOscillator();
-            const gain = audioCtx.createGain();
-            osc.connect(gain); gain.connect(audioCtx.destination);
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(600, audioCtx.currentTime);
-            osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.3);
-            gain.gain.setValueAtTime(0.15, audioCtx.currentTime);
-            gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.3);
-            osc.start(); osc.stop(audioCtx.currentTime + 0.3);
+                osc.type = 'square';
+                osc.frequency.value = 800 + Math.random() * 400;
+                gain.gain.setValueAtTime(0.05, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.05);
+            } catch (e) {}
         }
 
         function vibrate(pattern) {
@@ -326,9 +237,9 @@
             if (navigator.vibrate) navigator.vibrate(pattern);
         }
 
-        // ═══════════════════════════════════════════
+        // ============================================
         // 3. بناء العجلة
-        // ═══════════════════════════════════════════
+        // ============================================
         function buildWheel() {
             const segmentAngle = 360 / PRIZES.length;
             wheelEl.innerHTML = '';
@@ -357,85 +268,12 @@
             statusEl.className = 'status ' + type;
         }
 
-        // ═══════════════════════════════════════════
-        // 4. قصاصات احتفال
-        // ═══════════════════════════════════════════
-        function spawnConfetti(count = 60) {
-            const colors = ['#ffd700', '#ff3b3b', '#4caf50', '#2196f3', '#e91e63', '#9c27b0', '#ff9800'];
-            for (let i = 0; i < count; i++) {
-                const confetti = document.createElement('div');
-                confetti.className = 'confetti';
-                confetti.style.left = Math.random() * 100 + 'vw';
-                confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-                confetti.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
-                confetti.style.width = (Math.random() * 8 + 6) + 'px';
-                confetti.style.height = (Math.random() * 8 + 6) + 'px';
-                confetti.style.animation = `confettiFall ${2 + Math.random() * 2}s linear forwards`;
-                confetti.style.animationDelay = Math.random() * 0.5 + 's';
-                document.body.appendChild(confetti);
-                setTimeout(() => confetti.remove(), 5000);
-            }
-        }
-
-        // ═══════════════════════════════════════════
-        // 5. تدوير العجلة إلى index محدد
-        // ═══════════════════════════════════════════
-        function rotateToIndex(prizeIndex, callback) {
-            const segmentAngle = 360 / PRIZES.length;
-            const targetAngle = (prizeIndex * segmentAngle) + (segmentAngle / 2);
-            const extraSpins = 6 + Math.floor(Math.random() * 4);
-            const finalRotation = currentRotation + (extraSpins * 360) + (360 - targetAngle);
-
-            wheelEl.classList.add('spin');
-            wheelEl.style.transform = `rotate(${finalRotation}deg)`;
-            currentRotation = finalRotation;
-
-            let tickCount = 0;
-            const tickInterval = setInterval(() => {
-                if (tickCount < 40) { playTick(); tickCount++; }
-                else clearInterval(tickInterval);
-            }, 80);
-
-            setTimeout(() => {
-                clearInterval(tickInterval);
-                wheelEl.classList.remove('spin');
-                if (callback) callback();
-            }, 4600);
-        }
-
-        // ═══════════════════════════════════════════
-        // 6. عرض نافذة النتيجة
-        // ═══════════════════════════════════════════
-        function showResult(prize) {
-            resultModal.classList.add('show');
-            if (prize.type === 'win') {
-                resultEmoji.textContent = '🎉';
-                resultTitle.textContent = 'مبروك!';
-                resultMessage.innerHTML = `
-                    لقد ربحت جائزة رائعة!
-                    <span class="result-amount">💰 ${prize.value.toLocaleString()} ل.س</span>
-                `;
-                spawnConfetti(100);
-                playWinSound();
-                vibrate([100, 50, 100, 50, 200]);
-            } else if (prize.type === 'respin') {
-                resultEmoji.textContent = '🔄';
-                resultTitle.textContent = 'حظ سعيد!';
-                resultMessage.innerHTML = `حصلت على <b>${prize.name}</b><br>سيتم إضافة النتيجة في البوت!`;
-                playRespinSound();
-                vibrate([50, 30, 50]);
-            } else {
-                resultEmoji.textContent = '😢';
-                resultTitle.textContent = 'حظ أوفر!';
-                resultMessage.innerHTML = `حصلت على <b>${prize.name}</b><br>جرب حظك غداً!`;
-                playLoseSound();
-                vibrate(100);
-            }
-        }
-
-        // ═══════════════════════════════════════════
-        // 7. handleSpin — إرسال الطلب وانتظار البوت
-        // ═══════════════════════════════════════════
+        // ============================================
+        // 4. معالج زر الدوران
+        // ✅ العجلة تدور باستمرار (بدون توقف)
+        // ✅ sendData يُرسل ثم WebApp يُغلق
+        // ✅ البوت يختار الجائزة الحقيقية
+        // ============================================
         function handleSpin() {
             if (isSpinning) return;
             if (!tg) {
@@ -446,114 +284,51 @@
             isSpinning = true;
             spinBtn.disabled = true;
             wheelWrapper.classList.add('spinning');
-            setStatus('⏳ جاري اختيار الجائزة من البوت...');
+            setStatus('🎲 جاري الدوران...');
 
             if (!audioCtx) initAudio();
+            vibrate(50);
 
-            // ✅ نرسل الطلب فقط — لا ندور العجلة بعد
-            // البوت سيختار الجائزة ويرسلها عبر answerWebAppQuery
-            try {
-                tg.sendData(JSON.stringify({
-                    action: 'request_spin',
-                    ts: Date.now()
-                }));
-                console.log('[SPIN] ✅ sendData sent, waiting for answer from bot...');
-                setStatus('⏳ في انتظار البوت...');
-            } catch (err) {
-                console.error('[SPIN] sendData error:', err);
-                setStatus('❌ حدث خطأ في الإرسال', 'error');
-                isSpinning = false;
-                spinBtn.disabled = false;
-                wheelWrapper.classList.remove('spinning');
-            }
-        }
+            // ✅ 1. بدء دوران مستمر (بدون توقف)
+            wheelEl.style.transition = 'none';
+            wheelEl.style.animation = 'continuousSpin 0.8s linear infinite';
 
-        // ═══════════════════════════════════════════
-        // 8. handleAnswerFromBot — استقبال نتيجة البوت
-        // ═══════════════════════════════════════════
-        function handleAnswerFromBot(data) {
-            console.log('═══════════════════════════════════');
-            console.log('[ANSWER] وصلت نتيجة من البوت!');
-            console.log('[ANSWER] data:', data);
-            console.log('═══════════════════════════════════');
+            // ✅ 2. تشغيل صوت "تك تك" مستمر
+            const tickInterval = setInterval(() => {
+                playTick();
+            }, 100);
 
-            let prizeTitle = '';
+            // ✅ 3. إرسال sendData بعد 300ms (السماح للعجلة بالبدء بصرياً)
+            setTimeout(() => {
+                try {
+                    tg.sendData(JSON.stringify({
+                        action: 'request_spin',
+                        ts: Date.now()
+                    }));
+                    console.log('[SPIN] ✅ sendData sent — WebApp will close');
 
-            try {
-                const result = data.result || data;
-                if (result && result.title) {
-                    prizeTitle = result.title;
-                    console.log('[ANSWER] prizeTitle:', prizeTitle);
-                }
-            } catch (e) {
-                console.error('[ANSWER] Parse error:', e);
-            }
+                    // إيقاف الصوت (لأن WebApp سيُغلق)
+                    clearInterval(tickInterval);
 
-            if (!prizeTitle) {
-                console.error('[ANSWER] ❌ لا يوجد title في الرد');
-                setStatus('❌ حدث خطأ في استقبال النتيجة', 'error');
-                isSpinning = false;
-                spinBtn.disabled = false;
-                wheelWrapper.classList.remove('spinning');
-                return;
-            }
+                    setStatus('✅ راجع رسالة البوت للنتيجة!', 'success');
 
-            // حالة "عاود غداً"
-            if (prizeTitle.includes('عاود')) {
-                setStatus('⏰ عاود غداً!', 'error');
-                isSpinning = false;
-                spinBtn.disabled = false;
-                wheelWrapper.classList.remove('spinning');
-                return;
-            }
+                } catch (err) {
+                    console.error('[SPIN] sendData error:', err);
+                    clearInterval(tickInterval);
+                    setStatus('❌ حدث خطأ، حاول مرة أخرى', 'error');
 
-            // إيجاد الجائزة المطابقة في PRIZES
-            const foundIndex = PRIZES.findIndex(p => p.name === prizeTitle);
-
-            if (foundIndex !== -1) {
-                console.log(`[ANSWER] ✅ وجدت الجائزة index=${foundIndex}: ${PRIZES[foundIndex].name}`);
-                const prize = PRIZES[foundIndex];
-
-                rotateToIndex(foundIndex, () => {
-                    wheelWrapper.classList.remove('spinning');
-                    showResult(prize);
-                    isSpinning = false;
-                    setStatus('✅ تم! راجع البوت للتأكيد', 'success');
-                });
-            } else {
-                console.error(`[ANSWER] ❌ لم أجد الجائزة "${prizeTitle}" في PRIZES`);
-                let fallbackIndex = -1;
-                if (prizeTitle.includes('هارد')) fallbackIndex = 0;
-                else if (prizeTitle.includes('ريسبن')) fallbackIndex = 1;
-                else if (prizeTitle.includes('ليرة') || prizeTitle.includes('10000')) fallbackIndex = 2;
-
-                if (fallbackIndex !== -1) {
-                    console.log(`[ANSWER] ✅ fallback match index=${fallbackIndex}`);
-                    const prize = PRIZES[fallbackIndex];
-                    rotateToIndex(fallbackIndex, () => {
-                        wheelWrapper.classList.remove('spinning');
-                        showResult(prize);
-                        isSpinning = false;
-                    });
-                } else {
-                    setStatus('❌ جائزة غير معروفة', 'error');
+                    // إعادة تعيين الحالة
                     isSpinning = false;
                     spinBtn.disabled = false;
                     wheelWrapper.classList.remove('spinning');
+                    wheelEl.style.animation = 'none';
                 }
-            }
+            }, 300);
         }
 
-        // ═══════════════════════════════════════════
-        // 9. إغلاق نافذة النتيجة
-        // ═══════════════════════════════════════════
-        resultClose.addEventListener('click', () => {
-            resultModal.classList.remove('show');
-        });
-
-        // ═══════════════════════════════════════════
-        // 10. تهيئة التطبيق
-        // ═══════════════════════════════════════════
+        // ============================================
+        // 5. تهيئة التطبيق
+        // ============================================
         function init() {
             createStars();
             buildWheel();
@@ -568,10 +343,6 @@
                     tg.setHeaderColor('#0d0d1a');
                     tg.setBackgroundColor('#1a1a2e');
                 } catch (e) {}
-
-                // ✅✅✅ استقبال نتيجة البوت
-                tg.onEvent('webAppQueryResult', handleAnswerFromBot);
-                console.log('[INIT] ✅ webAppQueryResult listener registered');
 
                 if (tg.initDataUnsafe && tg.initDataUnsafe.user) {
                     const user = tg.initDataUnsafe.user;
