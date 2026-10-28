@@ -34,10 +34,17 @@
             font-size: 14px; letter-spacing: 4px; color: #4fc3f7; margin-bottom: 6px;
             font-weight: 700; text-shadow: 0 0 15px rgba(79,195,247,0.8);
             animation: botNamePulse 2s infinite ease-in-out;
+            transition: opacity 0.3s ease;
         }
         @keyframes botNamePulse {
             0%,100% { opacity: 0.7; letter-spacing: 4px; }
             50% { opacity: 1; letter-spacing: 6px; }
+        }
+
+        /* ✅ إخفاء ZEUS BOT عند الدوران */
+        .spinning .bot-name {
+            opacity: 0 !important;
+            animation: none !important;
         }
 
         .header h1 { font-size: 28px; margin-bottom: 8px;
@@ -84,22 +91,22 @@
             to { transform: rotate(360deg); }
         }
 
-        /* ✅ النصوص الجديدة — واضحة ومستقيمة */
+        /* ✅ النصوص في منتصف القطاعات */
         .wheel-label {
             position: absolute;
             font-family: 'Georgia', 'Times New Roman', serif;
-            font-size: 13px;
+            font-size: 12px;
             font-weight: 800;
-            letter-spacing: 0.5px;
+            letter-spacing: 0.3px;
             text-align: center;
             white-space: nowrap;
-            text-shadow: 0 2px 8px rgba(0,0,0,0.9), 0 0 4px rgba(0,0,0,1);
+            text-shadow: 0 2px 6px rgba(0,0,0,1), 0 0 3px rgba(0,0,0,1);
             pointer-events: none;
             z-index: 3;
-            padding: 4px 8px;
-            background: rgba(0,0,0,0.35);
-            border-radius: 6px;
-            backdrop-filter: blur(2px);
+            padding: 3px 6px;
+            background: rgba(0,0,0,0.45);
+            border-radius: 4px;
+            transform-origin: center center;
         }
 
         .wheel-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -154,7 +161,7 @@
             .wheel-wrapper { width: 300px; height: 300px; }
             .header h1 { font-size: 24px; }
             .spin-btn { padding: 18px 50px; font-size: 18px; }
-            .wheel-label { font-size: 12px; }
+            .wheel-label { font-size: 11px; }
         }
     </style>
 </head>
@@ -251,11 +258,10 @@
             if (navigator.vibrate) navigator.vibrate(pattern);
         }
 
-        // ✅ بناء العجلة بـ conic-gradient + نصوص مستقيمة
+        // ✅ النصوص في منتصف القطاعات
         function buildWheel() {
             const segmentAngle = 360 / PRIZES.length;
 
-            // خلفية العجلة
             const gradientStops = PRIZES.map((prize, index) => {
                 const startAngle = index * segmentAngle;
                 const endAngle = (index + 1) * segmentAngle;
@@ -265,22 +271,22 @@
             wheelEl.style.background = `conic-gradient(from -36deg, ${gradientStops})`;
             wheelEl.innerHTML = '';
 
-            // إضافة النصوص
             PRIZES.forEach((prize, index) => {
                 const label = document.createElement('div');
                 label.className = 'wheel-label';
 
                 const centerAngle = (index * segmentAngle) + (segmentAngle / 2);
 
-                // موضع النص على دائرة نصف قطرها 38% من مركز العجلة
-                const radius = 38;
+                // ✅ موضع دقيق: 33% من نصف القطر
+                const radiusPercent = 33;
                 const angleRad = (centerAngle - 90) * (Math.PI / 180);
-                const x = 50 + radius * Math.cos(angleRad);
-                const y = 50 + radius * Math.sin(angleRad);
+                const x = 50 + radiusPercent * Math.cos(angleRad);
+                const y = 50 + radiusPercent * Math.sin(angleRad);
 
                 label.style.left = x + '%';
                 label.style.top = y + '%';
-                label.style.transform = `translate(-50%, -50%) rotate(${centerAngle}deg)`;
+                // ✅ النص موازٍ لنصف القطر (مقروء من المركز إلى الحافة)
+                label.style.transform = `translate(-50%, -50%) rotate(${centerAngle - 90}deg)`;
                 label.style.color = prize.textColor;
                 label.textContent = prize.name;
 
