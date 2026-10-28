@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>🎡 Wheel of Fortune - ZEUSBOT</title>
+    <title>🎡 ZEUS BOT - Wheel of Fortune</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
@@ -29,6 +29,22 @@
 
         .header { text-align: center; margin-bottom: 20px; animation: fadeInDown 0.8s ease; }
         @keyframes fadeInDown { from{opacity:0;transform:translateY(-30px)} to{opacity:1;transform:translateY(0)} }
+
+        /* ✅ اسم البوت ZEUS BOT */
+        .bot-name {
+            font-size: 14px;
+            letter-spacing: 4px;
+            color: #4fc3f7;
+            margin-bottom: 6px;
+            font-weight: 700;
+            text-shadow: 0 0 15px rgba(79,195,247,0.8);
+            animation: botNamePulse 2s infinite ease-in-out;
+        }
+        @keyframes botNamePulse {
+            0%,100% { opacity: 0.7; letter-spacing: 4px; }
+            50% { opacity: 1; letter-spacing: 6px; }
+        }
+
         .header h1 { font-size: 28px; margin-bottom: 8px;
             font-family: 'Georgia', 'Times New Roman', serif;
             background: linear-gradient(45deg, #4fc3f7, #1a237e, #4fc3f7);
@@ -73,13 +89,15 @@
             to { transform: rotate(360deg); }
         }
 
+        /* ✅ الخطوط متساوية الآن (كل قطاع 72 درجة = 360/5) */
         .wheel-segment { position: absolute; width: 50%; height: 50%; top: 0; left: 50%;
             transform-origin: 0% 100%; display: flex; align-items: center; justify-content: center;
-            padding-left: 18%; padding-right: 8%;
+            padding-left: 15%; padding-right: 5%;
             font-family: 'Georgia', 'Times New Roman', serif;
-            font-size: 13px; font-weight: 700;
-            letter-spacing: 0.5px;
-            text-align: center; line-height: 1.2; border: 2px solid rgba(79,195,247,0.3);
+            font-size: 12px; font-weight: 700;
+            letter-spacing: 0.3px;
+            text-align: center; line-height: 1.2;
+            border: 1px solid rgba(79,195,247,0.2);
             overflow: hidden; text-shadow: 0 2px 6px rgba(0,0,0,0.8); }
 
         .wheel-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -134,7 +152,7 @@
             .wheel-wrapper { width: 300px; height: 300px; }
             .header h1 { font-size: 24px; }
             .spin-btn { padding: 18px 50px; font-size: 18px; }
-            .wheel-segment { font-size: 12px; }
+            .wheel-segment { font-size: 11px; }
         }
     </style>
 </head>
@@ -150,7 +168,8 @@
 
     <div class="container">
         <div class="header">
-            <h1>🎡 Wheel of Fortune 🎡</h1>
+            <div class="bot-name">⚡ ZEUS BOT ⚡</div>
+            <h1>Wheel of Fortune</h1>
             <p>Try your luck and win amazing prizes!</p>
         </div>
 
@@ -170,14 +189,15 @@
 
     <script>
         // ============================================
-        // Wheel Prizes — English names, black/blue theme
+        // Wheel Prizes — 5 equal segments (72° each)
+        // 20,000 (0%) | 10,000 (0%) | 2,000 (1%) | Respin (33%) | Hard Luck (66%)
         // ============================================
         const PRIZES = [
             { name: '20,000 SYP', type: 'win',       value: 20000, color: '#0a1128', textColor: '#4fc3f7' },
             { name: '10,000 SYP', type: 'win',       value: 10000, color: '#1a237e', textColor: '#ffffff' },
-            { name: 'Respin',     type: 'respin',    value: 0,     color: '#0d47a1', textColor: '#ffffff' },
-            { name: 'Hard Luck',  type: 'hard_luck', value: 0,     color: '#000000', textColor: '#90caf9' },
-            { name: '20% Bonus',  type: 'bonus',     value: 20,    color: '#283593', textColor: '#ffd700' },
+            { name: '2,000 SYP',  type: 'win',       value: 2000,  color: '#0d47a1', textColor: '#4fc3f7' },
+            { name: 'Respin',     type: 'respin',    value: 0,     color: '#000000', textColor: '#90caf9' },
+            { name: 'Hard Luck',  type: 'hard_luck', value: 0,     color: '#283593', textColor: '#ffffff' },
         ];
 
         // ============================================
@@ -243,10 +263,10 @@
         }
 
         // ============================================
-        // 3. Build wheel
+        // 3. Build wheel — 5 equal segments (72° each)
         // ============================================
         function buildWheel() {
-            const segmentAngle = 360 / PRIZES.length;
+            const segmentAngle = 360 / PRIZES.length;  // = 72°
             wheelEl.innerHTML = '';
             PRIZES.forEach((prize, index) => {
                 const segment = document.createElement('div');
